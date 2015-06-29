@@ -30,7 +30,7 @@ def main():
   # opts, args = parse_args()
   nluproc = nlu.nlu()
   nluproc.parse('''Hey, how are you?
-                    Would you like to may be meet say next Monday 5pm at Pierpont?
+                    Would you like to meet say next Monday 5pm at Pierpont?
                   Thanks,
                   Ananda''')
 
