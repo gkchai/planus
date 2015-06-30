@@ -4,17 +4,17 @@ p1
 ((lp2
 (S'spam_score'
 p3
-V0.012
+V0.022
 p4
 tp5
 a(S'spam_report'
 p6
-VSpam detection software, running on the system "mx-023.sjc1.sendgrid.net", has\u000aidentified this incoming email as possible spam.  The original message\u000ahas been attached to this so you can view it (if it isn't spam) or label\u000asimilar future email.  If you have any questions, see\u000a@@CONTACT_ADDRESS@@ for details.\u000a\u000aContent preview:  sadfsfsdasfsd sadfsfsdasfsd [...] \u000a\u000aContent analysis details:   (0.0 points, 5.0 required)\u000a\u000a pts rule name              description\u000a---- ---------------------- --------------------------------------------------\u000a 0.0 HTML_MESSAGE           BODY: HTML included in message\u000a 0.0 T_MIME_NO_TEXT         No text body parts\u000a 0.0 TVD_SPACE_RATIO        TVD_SPACE_RATIO\u000a\u000a
+VSpam detection software, running on the system "mx0020p1mdw1.sendgrid.net", has\u000aidentified this incoming email as possible spam.  The original message\u000ahas been attached to this so you can view it (if it isn't spam) or label\u000asimilar future email.  If you have any questions, see\u000a@@CONTACT_ADDRESS@@ for details.\u000a\u000aContent preview:  Nice sara. Sure that works for me. On Mon, Jun 29, 2015 at\u000a   10:59 PM, wrote: > Hi. This is Sara. I will convince you that I am human.\u000a   [...] \u000a\u000aContent analysis details:   (0.0 points, 5.0 required)\u000a\u000a pts rule name              description\u000a---- ---------------------- --------------------------------------------------\u000a 0.0 FREEMAIL_FROM          Sender email is freemail (gkciitd[at]gmail.com)\u000a 0.0 HTML_MESSAGE           BODY: HTML included in message\u000a 0.0 T_MIME_NO_TEXT         No text body parts\u000a 0.0 T_TO_NO_BRKTS_FREEMAIL T_TO_NO_BRKTS_FREEMAIL\u000a\u000a
 p7
 tp8
 a(S'from'
 p9
-V"Krishna C. Garikipati" <gkchai@eecs.umich.edu>
+V"G.K. Chaitanya" <gkciitd@gmail.com>
 p10
 tp11
 a(S'attachments'
@@ -23,58 +23,53 @@ V0
 tp13
 a(S'headers'
 p14
-VReceived: by mx-023.sjc1.sendgrid.net with SMTP id L9PPr2s9mK Tue, 30 Jun 2015 01:59:53 +0000 (UTC)\u000aReceived: from mail-oi0-f52.google.com (mail-oi0-f52.google.com [209.85.218.52]) by mx-023.sjc1.sendgrid.net (Postfix) with ESMTPS id C83B6C03FF1 for <sara@autoscientist.com>; Tue, 30 Jun 2015 01:59:53 +0000 (UTC)\u000aReceived: by oiyy130 with SMTP id y130so131170409oiy.0 for <sara@autoscientist.com>; Mon, 29 Jun 2015 18:59:53 -0700 (PDT)\u000aX-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20130820; h=x-gm-message-state:mime-version:sender:date:message-id:subject:from :to:cc:content-type; bh=NEfLy/9QWNdAk5Ub9fXJaxNg5oaDM5lowrT8nxqD0Gs=; b=Bc3AUWrXwhEEJpgdFV2ru9MJbxUi2WqqoSedY5IlcqG1LJ/q8C73xiC6T1ebEVSUkz A//n+R84gxPRFmlAFPSMLXTMDt6EtsKZDIsgwx/7QcqvNB2LI7u0BoDtmJWaWcg6rbJr rU0M4+YEaPx5PGWBHmaU7hNkgPSUd9NbZ5qIl//8T8npLuYY1RL++ikQIT/JTyehBoqc YVW4e1UbtRIzunbVS9N6j9E+U1qKxamgmahgrijKtBTumPOMEjqW36yaEvktBF4APaVc 1Is5wzNtVdCU8xgOvizx1+4FZtWR6NuPqAS7BJiwwdud3+yZCpA+kfnrTOpr1vfxpyS0 YnOA==\u000aX-Gm-Message-State: ALoCoQnqDOP8otJ5iYpglFpkBwSeBAcIEbcFrmTqH5htfl8P5wHbyFHm7XhW5fvibLFAt7+19r13\u000aMIME-Version: 1.0\u000aX-Received: by 10.182.33.38 with SMTP id o6mr14389026obi.41.1435629593212; Mon, 29 Jun 2015 18:59:53 -0700 (PDT)\u000aSender: gkchai@umich.edu\u000aReceived: by 10.202.55.130 with HTTP; Mon, 29 Jun 2015 18:59:53 -0700 (PDT)\u000aDate: Mon, 29 Jun 2015 21:59:53 -0400\u000aX-Google-Sender-Auth: 0Zzqq84OLFUNKuBpTiEuOJXp6S8\u000aMessage-ID: <CAF_e5pG1i_1qQYgvvZo=k8g89mWXrPTyPKug=Oui3R2QeNhzrg@mail.gmail.com>\u000aSubject: fdadsa\u000aFrom: "Krishna C. Garikipati" <gkchai@eecs.umich.edu>\u000aTo: "Krishna C. Garikipati" <gkciitd@gmail.com>\u000aCc: sara@autoscientist.com\u000aContent-Type: multipart/alternative; boundary=089e011838f0eefcc30519b28f7a\u000a
+VReceived: by mx0020p1mdw1.sendgrid.net with SMTP id JkZWkAVVyw Tue, 30 Jun 2015 02:56:17 +0000 (UTC)\u000aReceived: from mail-ob0-f174.google.com (mail-ob0-f174.google.com [209.85.214.174]) by mx0020p1mdw1.sendgrid.net (Postfix) with ESMTPS id 723C3A00DDC for <sara@autoscientist.com>; Tue, 30 Jun 2015 02:56:17 +0000 (UTC)\u000aReceived: by obdbs4 with SMTP id bs4so4994409obd.3 for <sara@autoscientist.com>; Mon, 29 Jun 2015 19:56:16 -0700 (PDT)\u000aDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20120113; h=mime-version:sender:in-reply-to:references:date:message-id:subject :from:to:content-type; bh=+jyeuvqTFgPLaCNfL8Lz+AEvlEeH6iFHLfUM0MDTkMU=; b=wZD8vkWQH7q+PdqhlHS8wSS71LPZxxsPag0d3QnG9q9ZNnvRrLOOKnZtG6N90jL4J2 sCDO46jYtdqxJkFmqjAPGrSfRgFjO74vCgNXyA+6/BpkIobgRiqG8B5Bl/T96V2KzFgB bm3wsU/b05c40WO/Fsmn7ZWMsAYQdPe+kUHclCVqaLWvRbcjbzE8pTODnLj88a7qzDt2 Qcgv544+213BFbsXqaZhDHj/qcU643kSO2fr6B1fZfqvkPEo/Eq580xPemmv+Ecj/zuC dhokByJJSUE4B2eHd3etk4lii0+dgRMdMfboiKiJofQhlCqNteoD4kOB31iq14Lm7UeF qzWQ==\u000aX-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=1e100.net; s=20130820; h=x-gm-message-state:mime-version:sender:in-reply-to:references:date :message-id:subject:from:to:content-type; bh=+jyeuvqTFgPLaCNfL8Lz+AEvlEeH6iFHLfUM0MDTkMU=; b=Dy53ZH8WYMsMdrqwGPW/ECKsEUy7tPc/LPCTjqZkoa0mlgOnx1P86JB2uY1VfmTjT+ L9LkJbVOavKcO61Et3EwPIUfUjqm95a6BUJYYgxqdfdHXwQyaansD5OwDCO+b0GrRMHF t1+ICVGPALJv7N7ciFHZDTHTJP16b8QubszGpSF7ua0PYeDeJK/vOxo9edeVZco2+/OU lcJsM40U88DE1r20hu/v8W0H9wVRCEkHOryHnZIWFP2yNMz4IVPLDvdJ+douTWH3i3wA CYZGpx66UvhCG6H/S+d54BmnweS/SIUnfFVqM+IMCL9RJpGegmubYpNB+QQ1QOiBWrnN CDhQ==\u000aX-Gm-Message-State: ALoCoQlcrnxSZwFFJoHpBcmC0Af7H0W+gxn9r3DJUH87WpAoWDpvShlYd04aPOM7PdUZ0BmliHWO\u000aMIME-Version: 1.0\u000aX-Received: by 10.202.62.212 with SMTP id l203mr16327526oia.67.1435632976492; Mon, 29 Jun 2015 19:56:16 -0700 (PDT)\u000aSender: gkchai@umich.edu\u000aReceived: by 10.202.55.130 with HTTP; Mon, 29 Jun 2015 19:56:16 -0700 (PDT)\u000aIn-Reply-To: <14e4263e98d.1123.4a4883@ismtpd-017>\u000aReferences: <CAF_e5pFk0VGd_8ypfEkhJmy8sU33-9N6Fa=SZofnznP0Ftg7vQ@mail.gmail.com> <14e4263e98d.1123.4a4883@ismtpd-017>\u000aDate: Mon, 29 Jun 2015 22:56:16 -0400\u000aX-Google-Sender-Auth: GKK1hxJhTTIM-hsqAUYJ9guYYGs\u000aMessage-ID: <CAF_e5pG5ZjoSS31DO5d1bC4yZjrWohvod7+=z676b2G2TU3pkQ@mail.gmail.com>\u000aSubject: Re: Oh hey\u000aFrom: "G.K. Chaitanya" <gkciitd@gmail.com>\u000aTo: sara@autoscientist.com\u000aContent-Type: multipart/alternative; boundary=001a113ccf3a9796cb0519b35980\u000a
 p15
 tp16
-a(S'cc'
+a(S'text'
 p17
-Vsara@autoscientist.com
+VNice sara. Sure that works for me.\u000a\u000aOn Mon, Jun 29, 2015 at 10:59 PM, <sara@autoscientist.com> wrote:\u000a\u000a> Hi. This is Sara. I will convince you that I am human.\u000a
 p18
 tp19
-a(S'text'
+a(S'envelope'
 p20
-Vsadfsfsdasfsd\u000a
+V{"to":["sara@autoscientist.com"],"from":"gkchai@umich.edu"}
 p21
 tp22
-a(S'envelope'
+a(S'to'
 p23
-V{"to":["sara@autoscientist.com"],"from":"gkchai@umich.edu"}
+Vsara@autoscientist.com
 p24
 tp25
-a(S'to'
+a(S'html'
 p26
-V"Krishna C. Garikipati" <gkciitd@gmail.com>
+V<div dir="ltr">Nice sara. Sure that works for me.<div class="gmail_extra"><br><div class="gmail_quote">On Mon, Jun 29, 2015 at 10:59 PM,  <span dir="ltr">&lt;<a href="mailto:sara@autoscientist.com" target="_blank">sara@autoscientist.com</a>&gt;</span> wrote:<br><blockquote class="gmail_quote" style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Hi. This is Sara. I will convince you that I am human.</blockquote></div><br></div></div>\u000a
 p27
 tp28
-a(S'html'
+a(S'sender_ip'
 p29
-V<div dir="ltr">sadfsfsdasfsd</div>\u000a
+V209.85.214.174
 p30
 tp31
-a(S'sender_ip'
+a(S'subject'
 p32
-V209.85.218.52
+VRe: Oh hey
 p33
 tp34
-a(S'subject'
+a(S'dkim'
 p35
-Vfdadsa
+V{@gmail.com : pass}
 p36
 tp37
-a(S'dkim'
+a(S'SPF'
 p38
-Vnone
+Vpass
 p39
 tp40
-a(S'SPF'
+a(S'charsets'
 p41
-Vpass
+V{"to":"UTF-8","html":"UTF-8","subject":"UTF-8","from":"UTF-8","text":"UTF-8"}
 p42
 tp43
-a(S'charsets'
-p44
-V{"to":"UTF-8","cc":"UTF-8","html":"UTF-8","subject":"UTF-8","from":"UTF-8","text":"UTF-8"}
-p45
-tp46
-atRp47
+atRp44
 .

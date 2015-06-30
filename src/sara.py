@@ -85,41 +85,42 @@ def sara_handle():
         cc = ''
 
 
-    if sara_sanity(cc, sub) == 'Fail':
-        return "Do Nothing"
+    hd = sara_parseheader(header)
+
+    # ---------------------------------------------------------------------
+    #                       RFC 2822
+    # https://tools.ietf.org/html/rfc2822#section-3.6.4
+    # ---------------------------------------------------------------------
+    # The "In-Reply-To:" and "References:" fields are used when creating a
+    # reply to a message.  They hold the message identifier of the original
+    # message and the message identifiers of other messages (for example,
+    # in the case of a reply to a message which was itself a reply).  The
+    # "In-Reply-To:" field may be used to identify the message (or messages)
+    # to which the new message is a reply, while the "References:" field may
+    # be used to identify a "thread" of conversation.
+    # ----------------------------------------------------------------------
+
+    try:
+        references = hd.get('References')
+    except KeyError:
+        references = ''
+
+    if references:
+        sara_id = references.split(' ')[0]
+    else:
+        sara_id = hd.get('Message-ID')
+
+
+    if sara_ifexists(sara_id):
+        sara_debug('Response belongs to existing thread')
+        sara_obj = sara_dict[sara_id]
+
     else:
 
-        hd = sara_parseheader(header)
-
-        # ---------------------------------------------------------------------
-        #                       RFC 2822
-        # https://tools.ietf.org/html/rfc2822#section-3.6.4
-        # ---------------------------------------------------------------------
-        # The "In-Reply-To:" and "References:" fields are used when creating a
-        # reply to a message.  They hold the message identifier of the original
-        # message and the message identifiers of other messages (for example,
-        # in the case of a reply to a message which was itself a reply).  The
-        # "In-Reply-To:" field may be used to identify the message (or messages)
-        # to which the new message is a reply, while the "References:" field may
-        # be used to identify a "thread" of conversation.
-        # ----------------------------------------------------------------------
-
-        try:
-            references = hd.get('References')
-        except KeyError:
-            references = ''
-
-        if references:
-            sara_id = references.split(' ')[0]
+        if sara_sanity(cc, sub) == 'Fail':
+           return "Do Nothing"
         else:
-            sara_id = hd.get('Message-ID')
 
-
-        if sara_ifexists(sara_id):
-            sara_debug('Response belongs to existing thread')
-            sara_obj = sara_dict[sara_id]
-
-        else:
             sara_debug('New thread started')
 
             ####################################
@@ -142,13 +143,13 @@ def sara_handle():
             sara_obj = sara(bu, fu, sub, body, html, hd, start, sara_id)
             sara_dict[sara_id] = sara_obj
 
-        # end if
+    # end if
 
-        sara_obj.add_request()
-        sara_obj.listen()
-        sara_obj.speak("Hi. This is Sara. I will convince you that I am human.")
-        sara_debug("Finished speaking"+ sara_obj.id)
-        return "Ok"
+    sara_obj.add_request()
+    sara_obj.listen()
+    sara_obj.speak("Hi. This is Sara. I will convince you that I am human.")
+    sara_debug("Finished speaking"+ sara_obj.id)
+    return "Ok"
 
 
 class sara():
