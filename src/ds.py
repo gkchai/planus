@@ -12,9 +12,9 @@ class nlu(object):
   def __init__(self):
     self.headers = {'Authorization': 'Bearer OUYQUGBHWOMQHP4Y47WWFBON6WR6I5WU'}
 
-  def get_dialog_act(self, string):
+  def get_dialog_act(self, utterance):
     # url = 'https://api.wit.ai/message?v=20150628&q=lets%20meet%20sometime%20tomorrow'
-    url = 'https://api.wit.ai/message?q='+urllib2_quote(string)
+    url = 'https://api.wit.ai/message?q='+urllib2_quote(utterance)
     response = requests.get(url, headers=self.headers)
     d_act = response.json()
     return d_act
@@ -70,8 +70,15 @@ class st(object):
 class dm(object):
 
   def __init__(self):
+    self.st = st()
     self.s = {'location':[], 'datetime':[], 'duration':[]}
+    self.a = []
 
+  def act(self, d_act):
+    self.st.update_state(d_act)
+
+  def take_action(self):
+    if self.st.s['location']
 
 
 # Dialog System
@@ -79,8 +86,11 @@ class ds(object):
 
   def __init__(self):
     self.nlu = nlu()
-    self.st = None # state tracker
     self.dm = dm()
 
-  def act(self):
-    pass
+  def take_turn(self, utterance):
+    d_act = self.nul.get_dialog_act(utterance)
+    action = self.dm.act(d_act)
+    return action
+
+
