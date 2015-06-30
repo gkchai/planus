@@ -132,13 +132,12 @@ def sara_handle():
             #####################################
 
             if hd.has_key('In-Reply-To'):
-                bu = who
-                fu = to
                 start = 'Free'
             else:
-                bu = to
-                fu = who
                 start = 'Busy'
+
+            bu = who
+            fu = to
 
             sara_obj = sara(bu, fu, sub, body, html, hd, start, sara_id)
             sara_dict[sara_id] = sara_obj
