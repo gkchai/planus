@@ -1,19 +1,24 @@
-input to DS:
+input to DS
+------------
 {
-  'from': ('email', 'first_name'), # 'email id of who sent the email to sara',
-  'cc': [], # list of such tuples
-  'body': 'main string of the email',
-  }
-  {
-  'avail_datetime': [], # list of tuples of datetime objects
-  'avail_location': some_object, # decide when we know more later
+  'email': {
+            'from': ('email', 'first_name'), # 'email id of who sent the email to sara',
+            'cc': [], # list of such tuples
+            'body': 'main string of the email',
+          },
+  'availability': {
+                    'avail_datetime': [], # list of tuples of datetime objects
+                    'avail_location': some_object, # decide when we know more later
+                  }
 }
 
-output from DS: {
+output from DS
+---------------
+{
   'meeting': {
-                'datetime': (from_datetime, to_datetime), # if everything is set, and meeting is ready to be added to calendar otherwise, None
-                'location': 'location string', # if everything is set, location to add to google calendar
-              },
+              'datetime': (from_datetime, to_datetime), # if everything is set, and meeting is ready to be added to calendar otherwise, None
+              'location': 'location string', # if everything is set, location to add to google calendar
+            },
   'emails': [
                 {
                   'to': 'email id of message to send', # single string
@@ -22,6 +27,4 @@ output from DS: {
                 },
             ]
 }
-
-
 
