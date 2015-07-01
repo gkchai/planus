@@ -34,6 +34,7 @@ def main():
     print '%d, In: ' % i, line
     print '\n'
     print '%d, Out: ' % i, testobj.take_turn(line)
+    pdb.set_trace()
 
 
 

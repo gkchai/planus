@@ -1,0 +1,15 @@
+input to DS:
+{
+  'from': 'email id of who sent the email to sara',
+  'cc': 'cc-ed emails other than sara, if present',
+  'body': 'main string of the email',
+  ''
+}
+
+output from DS:
+{
+  'to': 'email id of message to send',
+  'body': 'main string of email',
+  'datetime': (from_datetime, to_datetime), # if everything is set, and meeting is ready to be added to calendar otherwise, None
+  'location': 'location string', # if everything is set, location to add to google calendar
+}
