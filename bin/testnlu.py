@@ -6,7 +6,7 @@ import sys, pdb, traceback
 from math import log10
 import numpy as np, re
 
-from src import nlu
+from src import ds
 # timer = utils.runtimetracker()
 
 # def parse_args():
@@ -28,12 +28,12 @@ from src import nlu
 
 def main():
   # opts, args = parse_args()
-  nluproc = nlu.nlu()
-  nluproc.parse('''Hey, how are you?
-                    Would you like to meet say next Monday 5pm at Pierpont?
-                  Thanks,
-                  Ananda''')
-
+  for i, line in enumerate(open('data/sentences.txt', 'r')):
+    testobj = ds.ds()
+    print '\n\n'
+    print '%d, In: ' % i, line
+    print '\n'
+    print '%d, Out: ' % i, testobj.take_turn(line)
 
 
 
