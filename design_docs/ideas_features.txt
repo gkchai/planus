@@ -1,0 +1,11 @@
+SMALL feature additions:
+------------------------
+date with to and from fields
+if grain is day, ask for the exact time of meeting
+
+
+BIG feature additions:
+-----------------------
+handling negations and changes in values mentioned during the dialog
+our own NLU to add to wit.ai and using confidences to combine both
+

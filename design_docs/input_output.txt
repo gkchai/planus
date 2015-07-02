@@ -28,3 +28,29 @@ output from DS
             ]
 }
 
+
+
+====================
+function send(to_addrs, body)
+{
+  x = find_last_involvement (to_addrs);
+  if x is not None:
+    x.reply_to(to_addrs, body)
+  else:
+    delete_quote_and_send(to_addr, body) # case where B -> S initially where within that email, he asks to setup meeting with F,
+                                         # so S -> F is the current email, and you will have to delete quote from B->S before sending S->F
+}
+
+function receive(from_addr, to_addrs, cc_addrs, body)
+{
+  # the following if is simply to fix the state among all free users. If a new free guy is added by the busy guy, please take the most recent state
+  # among the free guys and add him to that. <-- this adding a free guy in the middle has not been included in the below snippet within the if statement
+  if from_addr is in free_guys_set:                   # free_guys_set will be present in person class
+    if all_freeguys_in_this_threadid_not_cced_or_toed:
+      reply_automatically_saying_adding_others()
+      to_addrs.append(everyone_not_involved_who_were_just_updated_by_sara)
+  input_obj = set_input_obj(from_addr, to_addrs, cc_addrs, body)
+  tid = extract_thread_id(?)
+  dsobj = ds(tid) # if tid is None ds will pass a brand new object
+  dsobj.take_turn(input_obj)
+}
