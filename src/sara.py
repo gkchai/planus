@@ -4,13 +4,13 @@ import email
 from email_reply_parser import EmailReplyParser
 import os
 import sys
-import cPickle as pickle
 import random
+# from src.ds import ds
 
 sys.path.append(os.path.abspath('/var/www/autos'))
 from autoviz import *
 
-SARA_NAME = 'sara@autoscientist.com'
+SARA = 'Sara<sara@autoscientist.com>'
 LOG_DIR = '/var/www/autos/planus/log/'
 
 import logging
@@ -31,39 +31,37 @@ logger.addHandler(handler)
 from pymongo import MongoClient
 client = MongoClient() # get a client
 db = client.sara.handles # get the database, like a table in sql
+sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
 
-
-def write_log(filename, data, opt='a'):
-    with open(filename, opt) as fo:
-        fo.write(data)
-
-def write_pickle(filename, data):
-    with open(filename, 'wb') as fo:
-        pickle.dumps(data)
-        pickle.dump(data, fo,  protocol=pickle.HIGHEST_PROTOCOL)
-
-
-def read_pickle(filename):
-    if os.path.exists(filename):
-        with open(filename ,'rb') as fo:
-            data = pickle.load(fo)
-    else:
-        data = {}
-    return data
 
 def record_exists(sara_id):
     return (db.find_one({'sara_id':sara_id}) is not None)
 
+def sara_get_body(msg):
+    maintype = msg.get_content_maintype()
+    if maintype == 'multipart':
+        for part in msg.get_payload():
+            if part.get_content_maintype() == 'text':
+                return part.get_payload()
+    elif maintype == 'text':
+        return msg.get_payload()
 
-def sara_quote(text):
-    # quote given text with '>'
-    seq = [line for line in text.splitlines(True)]
-    return '>'.join(seq)
+def sara_quote(msg):
 
-def sara_parseheader(header):
-    hparser = email.Parser.HeaderParser()
-    hd = hparser.parsestr(header)
-    return hd
+    body = sara_get_body(msg)
+    seq = [line for line in body.splitlines(True)]
+    quoted_body = '> '.join(seq)
+    date_tuple = email.utils.parsedate_tz(msg['Date'])
+    if date_tuple:
+        local_date = datetime.datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
+        time_body = local_date.strftime("On %a, %b %-d, %Y at %-H:%M %p,")
+        time_body = time_body + " %s wrote:"%msg['From']
+        return time_body + "\r\n\r\n> " + quoted_body
+    else:
+        return quoted_body
+
+def random_body():
+    return "Hi! This is Sara. Let's schedule a meeting at %d %s."%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string):
     logger.debug('[SARA]: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
@@ -72,8 +70,8 @@ def sara_sanity(cc, sub):
     # sanity check to exclude type of communications we
     # dont want i.e., indirect mail, incorrect addr, Fwd's etc.
 
-    if (cc is None) or (cc != SARA_NAME):
-        sara_debug('[sanity]: CC field not correct')
+    if (cc is None) or (cc != SARA):
+        sara_debug('[sanity]: CC field %s not correct'%cc)
         return "Fail"
 
     if len(sub) >= 4:
@@ -92,8 +90,8 @@ def sara_handle():
     # dictionary of email_ids and class instances
     sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
     header = request.form['headers']
-    who = request.form['from']
-    to =  request.form['to']
+    from_addr = request.form['from']
+    to_addr =  request.form['to']
 
     try:
         sub = request.form['subject']
@@ -111,155 +109,177 @@ def sara_handle():
         sara_debug('No html body present')
         html = ''
     try:
-        cc = request.form['cc']
+        cc_addrs = request.form['cc']
     except KeyError:
         sara_debug('CC missing')
-        cc = ''
+        cc_addrs = ''
 
+    # all to+cc addresses without sara
+    to_plus_cc_addrs = [addr for addr in (to_addrs + "," + cc_addrs).split('') if addr != SARA]
 
-    hd = sara_parseheader(header)
+    raw_email = header + "\r\n\r\n" + body
+    eobj = email.message_from_string(raw_email)
 
     # ---------------------------------------------------------------------
     #                       RFC 2822
     # https://tools.ietf.org/html/rfc2822#section-3.6.4
     # ---------------------------------------------------------------------
-    # The "In-Reply-To:" and "References:" fields are used when creating a
-    # reply to a message.  They hold the message identifier of the original
-    # message and the message identifiers of other messages (for example,
-    # in the case of a reply to a message which was itself a reply).  The
-    # "In-Reply-To:" field may be used to identify the message (or messages)
-    # to which the new message is a reply, while the "References:" field may
-    # be used to identify a "thread" of conversation.
-    # ----------------------------------------------------------------------
-
     try:
-        references = hd.get('References')
+        references = eobj.get('References')
     except KeyError:
         references = ''
 
     if references:
-        sara_id = references.split(' ')[0]
+        thread_id = references.split(' ')[0]
     else:
-        sara_id = hd.get('Message-ID')
+        thread_id = eobj.get('Message-ID')
 
-    ####################################
-    # Two possible starts of interaction
-    # First:
-        # k)   Busy <====> Free
-        # k+1) Busy ====> Free (CC: Sara)
-    # Second:
-        # 1) Busy ====> Free (CC: Sara)
-    #####################################
-
-    if hd.has_key('In-Reply-To'):
-        start = 'Any'
-    else:
-        start = 'Busy'
-
-
-    if record_exists(sara_id):
-
+    if record_exists(thread_id):
         sara_debug('Existing thread')
-        record = db.find_one({'sara_id': sara_id})
+        record = db.find_one({'thread_id': thread_id})
+        prev_elist = record['elist']
+        # anyone in the To/CC field apart from busy person and
+        # Sara is the free person
+        # TODO: Also remove other busy users who are also using Sara
+
+        fulist = record['fu']
         bu = record['bu']
-        fu = record['fu']
-        sara_obj = sara(bu, fu, sub, body, html, hd, start, sara_id)
-        sara_obj.speak("Hi. This is Sara%d"%random.randint(1,100), 1)
+        for addr in to_plus_cc_addrs:
+            if (addr not in fulist) and (addr != bu):
+                fulist.append(addr)
 
     else:
-
         sara_debug('New thread')
         if sara_sanity(cc, sub) == 'Fail':
            return "Do Nothing"
-        else:
-            bu = who
-            fu = to
-            sara_obj = sara(bu, fu, sub, body, html, hd, start, sara_id)
-            sara_obj.speak("Hi. This is Sara%d"%random.randint(1,100), 0)
-    # end if
+        # who ever first sent a mail to Sara is the Busy person
+        bu = from_addr
+        fulist = []
+        for addr in to_plus_cc_addrs:
+            fulist.append(addr)
+        prev_elist = []
 
-    sara_obj.listen()
+    new_elist = prev_elist.append(eobj.as_string())
+
     # update database
     res = db.update(
-        {'sara_id': sara_id},
+        {'thread_id': thread_id},
         {
-            'sara_id': sara_id,
-            "bu": bu,
-            "fu": fu,
-            "sub": sub,
-            "body": body,
-            "html": html,
-            "hd": hd.as_string(),
-            "start": start
+            'thread_id': thread_id,
+            'elist': new_elist,
+            'bu': bu,
+            'fu': fulist,
         },  upsert = True
         )
 
-    # sara_debug("Finished speaking: nMatched=%d, nUpserted=%d, nModified=%d"%(res['nMatched'], res['nUpserted'], n['nModified']))
-    sara_debug("Finished speaking")
+    # do nothing for loopback messages
+    if from_addr != SARA:
+        receive(from_addr, to_plus_cc_addrs, eobj, thread_id)
+
     return "Ok"
 
+def find_last_involvement(to_addrs, thread_id):
+    record = db.find_one({'thread_id': thread_id})
+    elist = record['elist']
+    for em in reversed(elist):
+        all_addrs = em['To'] + "," + em['From'] + (","+ em['CC'] if em['CC'] else '')
+        if to_addrs <= set(all_addrs):
+            return em
+
+def send(to_addrs, body, thread_id):
+    # to_addrs      :   list of addresses
+    em = find_last_involvement(to_addrs, thread_id);
+    if len(to_addrs) > 1:
+        to_addrs = to_addrs[0]
+        cc_addrs = (to_addrs[1:]).split(",")
+    else:
+        cc_addrs = ''
+
+    if not em:
+        reply(to_addrs, cc_addrs, body, em, delete=False)
+
+    else:
+        reply(to_addrs, cc_addrs, body, em, delete=True)
+        # case where B -> S initially where within that email, he asks to setup
+        # meeting with F, so S -> F is the current email, and you will have to
+        # delete quote from B->S before sending S->F
+
+    sara_debug("Finished sending")
 
 
-class sara():
-    # class for our personal assistant Sara's interaction
+def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
 
-    def __init__(self, busy_user, free_user, sub, body, html, hd, start, s_id):
-        self.bu = busy_user
-        self.fu = free_user
-        self.sub = sub
-        self.start = start
-        self.id = s_id
-        self.creation_date = datetime.datetime.now()
-        self.last_body = body
-        self.last_html = html
-        self.last_header = hd
+    # the following if is simply to fix the state among all free users. If a new
+    # free guy is added by the busy guy, please take the most recent state
+    # among the free guys and add him to that. <-- this adding a free guy in the
+    # middle has not been included in the below snippet within the if statement
+    if from_addr in fulist:
+
+        audience = [addr for addr in to_plus_cc_addrs if addr != bu]
+        if audience and audience != fulist:
+            adding_others_reply(fulist, current_email)
+            to_plus_cc_addrs = fulist
 
 
-    def speak(self, string, count):
-        # send email to free user with the given string
+    input_obj = {
+    'email': {
+            # 'from': ('last_name', 'first_name'),
+            'from': from_addr,
+            'to': to_plus_cc_addrs + [SARA],
+            'body': EmailReplyParser.parse_reply(sara_get_body(current_email)),
+          },
 
-        sara_debug("start speaking")
-        new_body = string
+    'availability': {
+                  'avail_datetime': [], # list of tuples of datetime objects
+                  'avail_location': None, # some form of object, decide when we know more later
+                }
+            }
 
-        if len(self.sub) < 3:
-            new_sub = 'Re:'+self.sub
+    dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
+    dsobj.take_turn(input_obj)
+
+    sara_debug("Finished receiving")
+
+
+def adding_others_reply(fulist, last_email):
+
+    msg = sendgrid.Mail()
+    msg.add_to(last_email['from'])
+    msg.add_cc( ",".join([SARA] + [addr for addr in fulist if addr != last_email['from']]))
+    msg.set_subject(last_email['subject'])
+    msg.set_text("Adding Others" + "\r\n\r\n> " + sara_quote(last_email))
+    msg.set_from(SARA)
+    msg.set_headers({"In-Reply-To": last_email["Message-ID"], "References": last_email['References'] + " " +last_email["Message-ID"]})
+    status, msg = sg.send(msg)
+
+
+def reply(to_addrs, cc_addrs, new_body, last_email, delete):
+
+    msg = sendgrid.Mail()
+    msg.add_to(to_addrs)
+    msg.add_cc(SARA + ("," + cc_addrs if cc_addrs else ""))
+
+    sub = last_email['subject']
+    if len(sub) < 3:
+        new_sub = 'Re:'+sub
+    else:
+        if (sub.lower()[0:3] == 're:'):
+           new_sub = sub
         else:
-            if (self.sub.lower()[0:3] == 're:'):
-                new_sub = self.sub
-            else:
-                new_sub = 'Re:'+self.sub
+            new_sub = 'Re:'+sub
+    msg.set_subject(new_sub)
 
-        if self.start == 'Busy' and count == 0:
-            # In this case, busy user initiated mail and CCed
-            # to Sara. Sara replies on top of that mail to the
-            # free user
+    if delete:
+        msg.set_text(new_body)
+    else:
+        msg.set_text(new_body + "\r\n\r\n> " + sara_quote(last_email))
 
-            new_in_reply_to = self.last_header.get('Message-ID')
-            new_references = new_in_reply_to
-        else:
-            # Regular case where Sara replies on top of the
-            # previous mail (from free user or the busy user)
+    msg.set_from(SARA)
+    msg.set_headers({"In-Reply-To": last_email["Message-ID"]})
+    if last_email['References']:
+        msg.set_headers({"References": last_email['References'] + " " +last_email["Message-ID"]})
+    else:
+        msg.set_headers({"References": last_email["Message-ID"]})
 
-            new_in_reply_to = self.last_header.get('Message-ID')
-            new_references = self.last_header.get('References') + " " + new_in_reply_to
-
-
-        msg = sendgrid.Mail()
-        msg.add_to(self.fu)
-        msg.set_subject(new_sub)
-        msg.set_text(new_body + "\n\n>" + sara_quote(self.last_body))
-        msg.set_from(SARA_NAME)
-        msg.set_headers({"In-Reply-To": new_in_reply_to, "References": new_references})
-
-        sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
-        status, msg = sg.send(msg)
-
-
-        return status
-
-    def listen(self):
-        # listen to free
-        # extract the new text
-
-        new_text = EmailReplyParser.parse_reply(self.last_body)
+    status, msg = sg.send(msg)
 

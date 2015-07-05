@@ -5,10 +5,20 @@ import email
 
 LOG_DIR = '/var/www/autos/planus/log/'
 
+def write_pickle(filename, data):
+    with open(filename, 'wb') as fo:
+        pickle.dumps(data)
+        pickle.dump(data, fo,  protocol=pickle.HIGHEST_PROTOCOL)
+
+
 def read_pickle(filename):
-    fo = open(filename, 'r')
-    data = pickle.load(fo)
+    if os.path.exists(filename):
+        with open(filename ,'rb') as fo:
+            data = pickle.load(fo)
+    else:
+        data = {}
     return data
+
 
 data = read_pickle(LOG_DIR+'/log.txt')
 hparser = email.Parser.HeaderParser()

@@ -77,7 +77,6 @@ def test_parse_run(seq, test_id):
 
             print "Checking existing mail thread ...",
 
-
             while not last_recv_email['Message-ID']:
                 time.sleep(5)
                 last_recv_email = test_check_mail(item[0], item[0], "INBOX", test_id)
@@ -102,7 +101,7 @@ def test_send(from_addr, to_addrs, cc_addrs, subject, new_body, last_email, repl
     # @subject        : subject of the email (if reply type then prefix 'Re:')
     # @new_body       : new text to be inserted
     # @last_email     : email object (instancetype = email.Message.Message)
-    # @reply_type     : ['Compose', 'Reply-To']
+    # @reply_type     : ['Compose', 'Reply-To', 'Reply-All']
 
     username = re.search(r'(?<=<)\w+',from_addr[0]).group(0)
     session = smtplib.SMTP('smtp.gmail.com', 587)
