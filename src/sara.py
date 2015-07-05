@@ -61,7 +61,7 @@ def sara_quote(msg):
         return quoted_body
 
 def random_body():
-    return "Hi! This is Sara. Let's schedule a meeting at %d %s."%(random.randint(1,10), random.choice(['AM', 'PM']))
+    return "Hi! This is Sara. Let's schedule a meeting at %d %s. \n Regards,\n Sara"%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string):
     logger.debug('[SARA]: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
@@ -87,7 +87,6 @@ def sara_handle():
     # appropriate action: if email_id doesn't exist then
     # create new instance else do a state transition
 
-    # dictionary of email_ids and class instances
     sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
     header = request.form['headers']
     from_addr = request.form['from']
@@ -138,8 +137,8 @@ def sara_handle():
         sara_debug('Existing thread')
         record = db.find_one({'thread_id': thread_id})
         prev_elist = record['elist']
-        # anyone in the To/CC field apart from busy person and
-        # Sara is the free person
+        # anyone in the To/CC field apart from busy person
+        # and Sara is the free person
         # TODO: Also remove other busy users who are also using Sara
 
         fulist = record['fu']
@@ -150,9 +149,10 @@ def sara_handle():
 
     else:
         sara_debug('New thread')
-        if sara_sanity(cc, sub) == 'Fail':
-           return "Do Nothing"
-        # who ever first sent a mail to Sara is the Busy person
+        # if sara_sanity(cc, sub) == 'Fail':
+        #    return "Do Nothing"
+
+        # who ever first sent a mail including Sara is the Busy person
         bu = from_addr
         fulist = []
         for addr in to_plus_cc_addrs:
@@ -181,7 +181,8 @@ def sara_handle():
 def find_last_involvement(to_addrs, thread_id):
     record = db.find_one({'thread_id': thread_id})
     elist = record['elist']
-    for em in reversed(elist):
+    for item in reversed(elist):
+        em = email.message_from_string(item)
         all_addrs = em['To'] + "," + em['From'] + (","+ em['CC'] if em['CC'] else '')
         if to_addrs <= set(all_addrs):
             return em
@@ -191,13 +192,12 @@ def send(to_addrs, body, thread_id):
     em = find_last_involvement(to_addrs, thread_id);
     if len(to_addrs) > 1:
         to_addrs = to_addrs[0]
-        cc_addrs = (to_addrs[1:]).split(",")
+        cc_addrs = ",".join(to_addrs[1:])
     else:
         cc_addrs = ''
 
     if not em:
         reply(to_addrs, cc_addrs, body, em, delete=False)
-
     else:
         reply(to_addrs, cc_addrs, body, em, delete=True)
         # case where B -> S initially where within that email, he asks to setup
@@ -220,7 +220,6 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
             adding_others_reply(fulist, current_email)
             to_plus_cc_addrs = fulist
 
-
     input_obj = {
     'email': {
             # 'from': ('last_name', 'first_name'),
@@ -237,7 +236,6 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
 
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
     dsobj.take_turn(input_obj)
-
     sara_debug("Finished receiving")
 
 
