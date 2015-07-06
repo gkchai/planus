@@ -10,7 +10,7 @@ import random
 sys.path.append(os.path.abspath('/var/www/autos'))
 from autoviz import *
 
-SARA = 'Sara<sara@autoscientist.com>'
+SARA = 'sara@autoscientist.com'
 LOG_DIR = '/var/www/autos/planus/log/'
 
 import logging
@@ -18,15 +18,15 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 # create a file handler
-handler = logging.FileHandler(LOG_DIR+'runtime.log')
-handler.setLevel(logging.INFO)
+# handler = logging.FileHandler(LOG_DIR+'runtime.log')
+# handler.setLevel(logging.INFO)
 
 # create a logging format
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-handler.setFormatter(formatter)
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
 
 # add the handlers to the logger
-logger.addHandler(handler)
+# logger.addHandler(handler)
 
 from pymongo import MongoClient
 client = MongoClient() # get a client
@@ -64,28 +64,25 @@ def random_body():
     return "Hi! This is Sara. Let's schedule a meeting at %d %s. \n Regards,\n Sara"%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string):
-    logger.debug('[SARA]: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
+    logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
 
 def sara_sanity(cc, sub):
     # sanity check to exclude type of communications we
     # dont want i.e., indirect mail, incorrect addr, Fwd's etc.
-
     if (cc is None) or (cc != SARA):
         sara_debug('[sanity]: CC field %s not correct'%cc)
         return "Fail"
-
     if len(sub) >= 4:
         if (sub.lower())[:4] == 'fwd:':
             sara_debug('[sanity]: Received a forwarding mail')
             return "Fail"
-
     return "Pass"
 
 
 def sara_handle():
     # pass the message handle to sara and take
-    # appropriate action: if email_id doesn't exist then
-    # create new instance else do a state transition
+    # appropriate action: if message_id doesn't
+    # exist in database then create a new thread
 
     sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
     header = request.form['headers']
@@ -114,7 +111,7 @@ def sara_handle():
         cc_addrs = ''
 
     # all to+cc addresses without sara
-    to_plus_cc_addrs = [addr for addr in (to_addrs + "," + cc_addrs).split('') if addr != SARA]
+    to_plus_cc_addrs = [addr for addr in (to_addrs + "," + cc_addrs).split(',') if addr != SARA]
 
     raw_email = header + "\r\n\r\n" + body
     eobj = email.message_from_string(raw_email)
@@ -223,8 +220,8 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
     input_obj = {
     'email': {
             # 'from': ('last_name', 'first_name'),
-            'from': from_addr,
-            'to': to_plus_cc_addrs + [SARA],
+            'from': re.search("\w+@\w+\.com", from_addr).group(0),
+            'to': re.search("\w+@\w+\.com", to_plus_cc_addrs + [SARA]).group(0),
             'body': EmailReplyParser.parse_reply(sara_get_body(current_email)),
           },
 

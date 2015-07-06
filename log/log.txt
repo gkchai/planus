@@ -4,17 +4,17 @@ p1
 ((lp2
 (S'spam_score'
 p3
-V2.26
+V3.4
 p4
 tp5
 a(S'spam_report'
 p6
-VSpam detection software, running on the system "mx-023.sjc1.sendgrid.net", has\u000aidentified this incoming email as possible spam.  The original message\u000ahas been attached to this so you can view it (if it isn't spam) or label\u000asimilar future email.  If you have any questions, see\u000a@@CONTACT_ADDRESS@@ for details.\u000a\u000aContent preview:  Totally 2015-07-04 14:59 GMT-04:00 Sara : > Hi. This is Sara85\u000a   > > > Sounds good. > > > > 2015-07-04 14:55 GMT-04:00 Sara : > > > > > Hi.\u000a   This is Sara61 > > > > > > > Ok. Let's schedule a meeting at 1 AM. Vitae\u000a  morbi aptent ante. Fusce > > > justo scelerisque non primis a vestibulum dui\u000a   morbi adipiscing urna > mauris > > > fermentum vulputate curae at congue\u000a  aliquet. Felis justo platea > vehicula mi. > > > > [...] \u000a\u000aContent analysis details:   (2.3 points, 5.0 required)\u000a\u000a pts rule name              description\u000a---- ---------------------- --------------------------------------------------\u000a 2.2 HK_NAME_FREE           From name mentions free stuff\u000a 0.0 FREEMAIL_FROM          Sender email is freemail (freetom15[at]gmail.com)\u000a 0.0 HTML_MESSAGE           BODY: HTML included in message\u000a 0.0 T_MIME_NO_TEXT         No text body parts\u000a\u000a
+VSpam detection software, running on the system "mx-023.sjc1.sendgrid.net", has\u000aidentified this incoming email as possible spam.  The original message\u000ahas been attached to this so you can view it (if it isn't spam) or label\u000asimilar future email.  If you have any questions, see\u000a@@CONTACT_ADDRESS@@ for details.\u000a\u000aContent preview:  Ok. Let's schedule a meeting at 7 AM. Fusce donec est odio.\u000a   Porta fames lacinia elementum nam massa tincidunt phasellus amet enim nonummy\u000a   ve posuere. Ipsum fames etiam orci hymenaeos tellus. [...] \u000a\u000aContent analysis details:   (3.4 points, 5.0 required)\u000a\u000a pts rule name              description\u000a---- ---------------------- --------------------------------------------------\u000a 0.0 FREEMAIL_FROM          Sender email is freemail (busybob15[at]gmail.com)\u000a 3.4 FROM_MISSP_FREEMAIL    From misspaced + freemail provider\u000a\u000a
 p7
 tp8
 a(S'from'
 p9
-VTom Free <freetom15@gmail.com>
+VB<busybob15@gmail.com>
 p10
 tp11
 a(S'attachments'
@@ -23,37 +23,37 @@ V0
 tp13
 a(S'headers'
 p14
-VReceived: by mx-023.sjc1.sendgrid.net with SMTP id Nbal89lwJ7 Sat, 04 Jul 2015 18:54:43 +0000 (UTC)\u000aReceived: from mail-la0-f42.google.com (mail-la0-f42.google.com [209.85.215.42]) by mx-023.sjc1.sendgrid.net (Postfix) with ESMTPS id 10230C04D55 for <sara@autoscientist.com>; Sat,  4 Jul 2015 18:54:43 +0000 (UTC)\u000aReceived: by lagx9 with SMTP id x9so115453449lag.1 for <sara@autoscientist.com>; Sat, 04 Jul 2015 11:54:41 -0700 (PDT)\u000aDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20120113; h=mime-version:in-reply-to:references:date:message-id:subject:from:to :content-type; bh=TG+EFPAY6Fsthtwb99dUbma9EmS+WK0wl1G3+l/U2b8=; b=VibdsCBtnfHW74dQB/UyXAVbrCuSFjy8jQtgDIj7gOZWpMm8E77wKZLOC8Q+0aMvOx 6JS1w3tYoeADQ/z9L00KieczNay/sD3LsQIe+9oaLs7E9xcNLE1nVQYxjN1WG30pMpfh 7QJ/H1XVJMmy0h6iAoSATF7ERrM9Yb2VhNvLcbNY4PU8I1j0MsX3LwRlubnov2DnrleS 6TkRyGk8ZQrUggdadPIgcGfEOzwq5A7x4FjUVmDyOqiAAmGFqog/hCC7Lu3FwSRJ5DNn wK+sZDj3yRjHQ6J4ypVjMH+OPLZGZTe0MNTREFG0693jDxqN0FAUA5HQUs9Hzv/Bp2aD Wi5w==\u000aMIME-Version: 1.0\u000aX-Received: by 10.152.87.13 with SMTP id t13mr41864661laz.66.1436036080997; Sat, 04 Jul 2015 11:54:40 -0700 (PDT)\u000aReceived: by 10.25.8.202 with HTTP; Sat, 4 Jul 2015 11:54:40 -0700 (PDT)\u000aIn-Reply-To: <14e5a6b4d32.b38.45659b@ismtpd-072>\u000aReferences: <55982ae9.8be78c0a.af48.3f32@mx.google.com> <14e5a683330.1e1c.43df39@ismtpd-083> <CA+_TaroT225t5ZMEzdQgV6YoOP9M7KgkP0OV3Qy1h+MJ8YBjWA@mail.gmail.com> <14e5a6b4d32.b38.45659b@ismtpd-072>\u000aDate: Sat, 4 Jul 2015 14:54:40 -0400\u000aMessage-ID: <CA+_TarpbxVWUoT1r6-GGDAOwovXks7pReyym8vCP6V1G973yZQ@mail.gmail.com>\u000aSubject: Re: Let's meet ? [TestID: TJbKOKviIS]\u000aFrom: Tom Free <freetom15@gmail.com>\u000aTo: Sara <sara@autoscientist.com>\u000aContent-Type: multipart/alternative; boundary=001a11c353e67e1a95051a113456\u000a
+VReceived: by mx-023.sjc1.sendgrid.net with SMTP id vefdwr7A3w Mon, 06 Jul 2015 00:17:23 +0000 (UTC)\u000aReceived: from mail-qk0-f195.google.com (mail-qk0-f195.google.com [209.85.220.195]) by mx-023.sjc1.sendgrid.net (Postfix) with ESMTPS id E0CAEC007CF for <sara@autoscientist.com>; Mon,  6 Jul 2015 00:17:22 +0000 (UTC)\u000aReceived: by qkbz76 with SMTP id z76so11022283qkb.0 for <sara@autoscientist.com>; Sun, 05 Jul 2015 17:17:21 -0700 (PDT)\u000aDKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=gmail.com; s=20120113; h=message-id:date:from:to:mime-version:content-type:cc:subject; bh=xvkpgv1oRQ2G4A32FUEUEUrmE7zORqmZ1AgqoILlLCo=; b=P68PRy9DRTKFUGYHG4y48zlHlualAzqdem01kft1mPDqMY4fqjmBw92zdQvwfYAZkv Fb/HYDirRcwDCZ+qSbakvewpkQNGOpdB/wLwUo7U1X5SPVha6rWiarg4EhswuA/Sd/xn hwxHCxa4TQ5KH/xwysvv+3zZOC5OrU6J5Kjl3Mlhm+IXMUVj+LIzN3CKU5/h5+18adNu WPIbbqx19ULtNvanFY2Sr51ca4GXHqvX6ozS0f7RZWqnm3xJvRVsGku75a/x0Kpoodx0 GR5IXYR1aEf0q0cfE48diYiZlWbSxWcCYwz/Tjb4cfaU6G9lBTdFOFh3pPLUCZqskn2l GPBA==\u000aX-Received: by 10.140.234.131 with SMTP id f125mr11716073qhc.30.1436141841773; Sun, 05 Jul 2015 17:17:21 -0700 (PDT)\u000aReceived: from ip-172-31-33-83.ec2.internal (ec2-54-165-171-101.compute-1.amazonaws.com. [54.165.171.101]) by mx.google.com with ESMTPSA id 25sm8438969qkw.13.2015.07.05.17.17.21 (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128); Sun, 05 Jul 2015 17:17:21 -0700 (PDT)\u000aMessage-ID: <5599c911.9916370a.5d0ab.ffffc558@mx.google.com>\u000aDate: Sun, 05 Jul 2015 17:17:21 -0700 (PDT)\u000afrom: B<busybob15@gmail.com>\u000ato: F1<freetom15@gmail.com>\u000amime-version: 1.0\u000acontent-type: text/plain; charset=UTF-8\u000acc: Sara<sara@autoscientist.com>\u000asubject: Let's meet ? [TestID: wOFJSvZScB]\u000a
 p15
 tp16
-a(S'text'
+a(S'cc'
 p17
-VTotally\u000a\u000a2015-07-04 14:59 GMT-04:00 Sara <sara@autoscientist.com>:\u000a\u000a> Hi. This is Sara85\u000a>\u000a> > Sounds good.\u000a> >\u000a> > 2015-07-04 14:55 GMT-04:00 Sara <sara@autoscientist.com>:\u000a> >\u000a> > > Hi. This is Sara61\u000a> > >\u000a> > > > Ok. Let's schedule a meeting at 1 AM. Vitae morbi aptent ante. Fusce\u000a> > > justo scelerisque non primis a vestibulum dui morbi adipiscing urna\u000a> mauris\u000a> > > fermentum vulputate curae at congue aliquet. Felis justo platea\u000a> vehicula mi.\u000a> > >\u000a>\u000a
+VSara<sara@autoscientist.com>
 p18
 tp19
-a(S'envelope'
+a(S'text'
 p20
-V{"to":["sara@autoscientist.com"],"from":"freetom15@gmail.com"}
+VOk. Let's schedule a meeting at 7 AM. Fusce donec est odio. Porta fames lacinia elementum nam massa tincidunt phasellus amet enim nonummy ve posuere. Ipsum fames etiam orci hymenaeos tellus.\u000a
 p21
 tp22
-a(S'to'
+a(S'envelope'
 p23
-VSara <sara@autoscientist.com>
+V{"to":["sara@autoscientist.com"],"from":"busybob15@gmail.com"}
 p24
 tp25
-a(S'html'
+a(S'to'
 p26
-V<div dir="ltr">Totally</div><div class="gmail_extra"><br><div class="gmail_quote">2015-07-04 14:59 GMT-04:00 Sara <span dir="ltr">&lt;<a href="mailto:sara@autoscientist.com" target="_blank">sara@autoscientist.com</a>&gt;</span>:<br><blockquote class="gmail_quote" style="margin:0 0 0 .8ex;border-left:1px #ccc solid;padding-left:1ex">Hi. This is Sara85<br>\u000a<div class="HOEnZb"><div class="h5"><br>\u000a&gt; Sounds good.<br>\u000a&gt;<br>\u000a&gt; 2015-07-04 14:55 GMT-04:00 Sara &lt;<a href="mailto:sara@autoscientist.com">sara@autoscientist.com</a>&gt;:<br>\u000a&gt;<br>\u000a&gt; &gt; Hi. This is Sara61<br>\u000a&gt; &gt;<br>\u000a&gt; &gt; &gt; Ok. Let&#39;s schedule a meeting at 1 AM. Vitae morbi aptent ante. Fusce<br>\u000a&gt; &gt; justo scelerisque non primis a vestibulum dui morbi adipiscing urna mauris<br>\u000a&gt; &gt; fermentum vulputate curae at congue aliquet. Felis justo platea vehicula mi.<br>\u000a&gt; &gt;<br>\u000a</div></div></blockquote></div><br></div>\u000a
+VF1<freetom15@gmail.com>
 p27
 tp28
 a(S'sender_ip'
 p29
-V209.85.215.42
+V209.85.220.195
 p30
 tp31
 a(S'subject'
 p32
-VRe: Let's meet ? [TestID: TJbKOKviIS]
+VLet's meet ? [TestID: wOFJSvZScB]
 p33
 tp34
 a(S'dkim'
@@ -68,7 +68,7 @@ p39
 tp40
 a(S'charsets'
 p41
-V{"to":"UTF-8","html":"UTF-8","subject":"UTF-8","from":"UTF-8","text":"UTF-8"}
+V{"to":"UTF-8","cc":"UTF-8","subject":"UTF-8","from":"UTF-8","text":"UTF-8"}
 p42
 tp43
 atRp44
