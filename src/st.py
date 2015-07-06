@@ -5,7 +5,7 @@ class st(object):
 # TODO: agenda_entry can be used for title of the meeting. Or may be the busy + free guys' names
 
   def __init__(self):
-    self.s = {'location':[], 'datetime':[], 'duration':[]}
+    self.s = {'location':[], 'datetime':[], 'duration':[], 'user_ids':[] } # either 'edges_loc': set() OR 'location': heap()
     self.turns = []
 
   def update_state(self, d_act):

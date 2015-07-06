@@ -9,3 +9,9 @@ BIG feature additions:
 handling negations and changes in values mentioned during the dialog
 our own NLU to add to wit.ai and using confidences to combine both
 
+
+
+state tracker should change to a graph representation
+state tracker should have a summary state
+policy will map summary states to actions
+
