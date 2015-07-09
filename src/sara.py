@@ -5,6 +5,7 @@ from email_reply_parser import EmailReplyParser
 import os
 import sys
 import random
+import cal
 # from src.ds import ds
 
 sys.path.append(os.path.abspath('/var/www/autos'))
@@ -222,7 +223,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     for item in to_plus_cc_addrs + [SARA]:
         m = re.search("\w+@\w+\.com", item)
         person_list.append({
-                'email': m.group(0)
+                'email': m.group(0),
                 'first_name': item[0:m.start()]
                 }
             )
@@ -241,7 +242,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
           },
 
     'availability': {
-                  'datetime': [], # list of tuples of datetime objects
+                  'datetime': cal.get_free_slots(re.search("\w+@\w+\.com", bu).group(0)), # list of tuples of datetime objects
                   'location': "Starbucks",
                 }
             }
@@ -252,7 +253,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     body = output_obj['emails']['body']
 
     if output_obj['meeting']:
-        send_invite(bu, fulist, output_obj['meeting']['location'], output_obj['meeting']['datetime']['start'], output_obj['meeting']['datetime']['end'])
+        cal.send_invite(bu, fulist, output_obj['meeting']['location'], output_obj['meeting']['datetime']['start'], output_obj['meeting']['datetime']['end'])
     else:
         send(to_addrs, body, thread_id)
 
