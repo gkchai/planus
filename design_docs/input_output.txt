@@ -31,8 +31,11 @@ input to DS
 output from DS
 ---------------
 {
-  'meeting': {
-              'datetime': (from_datetime, to_datetime), # if everything is set, and meeting is ready to be added to calendar otherwise, None
+  'meeting': { # if everything is set, and meeting is ready to be added to calendar otherwise, None
+              'datetime': {
+                            "start": datetime_object,
+                            "end": datetime_object
+                          },
               'location': 'location string', # if everything is set, location to add to google calendar
             },
   'emails': [
