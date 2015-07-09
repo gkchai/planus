@@ -105,7 +105,7 @@ if __name__ == '__main__':
 
     login = "busybob15@gmail.com"
     password = "autoscientist"
-    attendees = ["freetom15@gmail.com", "freejon15@gmail.com", "gkciitd@gmail.com"]
+    attendees = ["freetom15@gmail.com", "freejon15@gmail.com", "gkciitd@gmail.com", 'anandacontact@gmail.com']
     fro = "Bob Busy<busybob15@gmail.com>"
 
 

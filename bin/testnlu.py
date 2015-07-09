@@ -24,8 +24,20 @@ def main():
 def get_input(email_body):
   input_obj = {
                 'email': {
-                            'from': ('email@gmail.com', 'first_name'), #'email id of who sent the email to sara',
-                            'cc': [], # list of such tuples
+                            'from': {
+                                      'email': 'example@gmail.com',
+                                      'first_name': 'Krishna'
+                                    },
+                            'from': [
+                                      {
+                                        'email': '1@gmail.com',
+                                        'first_name': '1'
+                                      },
+                                      {
+                                        'email': '2@gmail.com',
+                                        'first_name': '2'
+                                      },
+                                    ],
                             'body': 'main string of the email',
                           },
                 'availability': {
