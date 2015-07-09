@@ -9,7 +9,7 @@ class dm(object):
     self.s = {'location':[], 'datetime':[], 'duration':[]}
 
 
-  def next_act(self, d_act):
+  def next_act(self, d_act, from_addr, to_addrs):
     self.st.update_state(d_act)
     return self.act_policy()
 

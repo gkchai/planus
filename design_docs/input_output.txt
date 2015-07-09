@@ -1,9 +1,20 @@
+person object for now
+------------
+A trivial <person> object is defined by the following dictionary:
+{
+  'email': 'example@gmail.com',
+  'first_name': 'Krishna'
+}
+
 input to DS
 ------------
 {
   'email': {
-            'from': ('email', 'first_name'), # 'email id of who sent the email to sara',
-            'cc': [], # list of such tuples
+            'from': {
+                      'email': 'example@gmail.com',
+                      'first_name': 'Krishna'
+                    }, # this is an example of the person object
+            'to': [<person1>, <person2>, <person3>], # list of such <person> objects
             'body': 'main string of the email',
           },
   'availability': {
@@ -21,8 +32,7 @@ output from DS
             },
   'emails': [
                 {
-                  'to': 'email id of message to send', # single string
-                  'cc': [], # list of email ids to cc during sendint this email,
+                  'to': [], # list of email ids to cc during sendint this email,
                   'body': 'main string of email',
                 },
             ]

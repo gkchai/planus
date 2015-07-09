@@ -8,19 +8,19 @@ from src.nlg import nlg
 # Dialog System
 class ds(object):
 
-  def __init__(self):
+  def __init__(self, dialog_id=None):
     self.nlu = nlu()
     self.dm = dm()
     self.nlg = nlg()
 
-  def take_turn(self, input):
-    utterance = input['email']['body']
+  def take_turn(self, input_obj):
+    utterance = input_obj['email']['body']
     d_act_in = self.nlu.get_dialog_act(utterance)
-    d_act_out = self.dm.next_act(d_act_in)
+    d_act_out, from_addr, to_addrs = self.dm.next_act(d_act_in, input_obj['from'], input_obj['to'])
     email_body = self.nlg.generate_response(d_act_out)
-    return self.get_output(d_act_out, email_body)
+    return self.get_output(d_act_out, email_body, from_addr, to_addrs)
 
-  def get_output(self, d_act, email_body):
+  def get_output(self, d_act, email_body, to_addrs):
     output = {
                 'meeting': {
                               'datetime': (None, None), # if everything is set, and meeting is ready to be added to calendar otherwise, None
@@ -28,8 +28,7 @@ class ds(object):
                             },
                 'emails': [
                               {
-                                'to': '', # single string
-                                'cc': [], # list of email ids to cc during sendint this email,
+                                'to': to_addrs, # list of email ids to cc during sending this email,
                                 'body': '',
                               },
                           ],
