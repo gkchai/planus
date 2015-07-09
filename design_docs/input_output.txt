@@ -18,8 +18,13 @@ input to DS
             'body': 'main string of the email',
           },
   'availability': {
-                    'avail_datetime': [], # list of tuples of datetime objects
-                    'avail_location': some_object, # decide when we know more later
+                    'datetime': [
+                                  {
+                                    "start": datetime_object,
+                                    "end": datetime_object
+                                  },
+                                ],
+                    'location': some_object, # decide when we know more later
                   }
 }
 
@@ -33,7 +38,7 @@ output from DS
   'emails': [
                 {
                   'to': [], # list of email ids to cc during sendint this email,
-                  'body': 'main string of email',
+                    'body': 'main string of email',
                 },
             ]
 }
