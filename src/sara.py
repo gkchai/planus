@@ -171,7 +171,7 @@ def sara_handle():
 
     # do nothing for loopback messages
     if from_addr != SARA:
-        receive(from_addr, to_plus_cc_addrs, eobj, thread_id)
+        receive(from_addr, to_plus_cc_addrs, eobj, thread_id, fulist, bu)
 
     return "Ok"
 
@@ -204,7 +204,7 @@ def send(to_addrs, body, thread_id):
     sara_debug("Finished sending")
 
 
-def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
+def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
     # the following if is simply to fix the state among all free users. If a new
     # free guy is added by the busy guy, please take the most recent state
@@ -217,22 +217,46 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id):
             adding_others_reply(fulist, current_email)
             to_plus_cc_addrs = fulist
 
+
+    person_list = []
+    for item in to_plus_cc_addrs + [SARA]:
+        m = re.search("\w+@\w+\.com", item)
+        person_list.append({
+                'email': m.group(0)
+                'first_name': item[0:m.start()]
+                }
+            )
+
+    m = re.search("\w+@\w+\.com", from_addr)
+    from_entry = {
+                    'email': m.group(0),
+                    'first_name': from_addr[0:m.start()]
+                }
+
     input_obj = {
     'email': {
-            # 'from': ('last_name', 'first_name'),
-            'from': re.search("\w+@\w+\.com", from_addr).group(0),
-            'to': re.search("\w+@\w+\.com", to_plus_cc_addrs + [SARA]).group(0),
+            'from': from_entry,
+            'to': person_list,
             'body': EmailReplyParser.parse_reply(sara_get_body(current_email)),
           },
 
     'availability': {
-                  'avail_datetime': [], # list of tuples of datetime objects
-                  'avail_location': None, # some form of object, decide when we know more later
+                  'datetime': [], # list of tuples of datetime objects
+                  'location': "Starbucks",
                 }
             }
 
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
-    dsobj.take_turn(input_obj)
+    output_obj = dsobj.take_turn(input_obj)
+    to_addrs = output_obj['emails']['to']
+    body = output_obj['emails']['body']
+
+    if output_obj['meeting']:
+        send_invite(bu, fulist, output_obj['meeting']['location'], output_obj['meeting']['datetime']['start'], output_obj['meeting']['datetime']['end'])
+    else:
+        send(to_addrs, body, thread_id)
+
+
     sara_debug("Finished receiving")
 
 
@@ -253,7 +277,6 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
     msg = sendgrid.Mail()
     msg.add_to(to_addrs)
     msg.add_cc(SARA + ("," + cc_addrs if cc_addrs else ""))
-
     sub = last_email['subject']
     if len(sub) < 3:
         new_sub = 'Re:'+sub
