@@ -17,14 +17,14 @@ class ds(object):
     utterance = input_obj['email']['body']
     d_act_in = input_obj['email']
     d_act_in['nlu'] = self.nlu.get_dialog_act(utterance)
-    d_act_out, emails_act = self.dm.next_act(d_act_in)
-    # pdb.set_trace()
+    d_act_out, email_acts = self.dm.next_act(d_act_in)
+    pdb.set_trace()
+    emails = []
     for email_act in emails_act:
-      email_body = self.nlg.generate_response(d_act_out)
-    # email_body =
-    return self.get_output(d_act_out, email_body, emails)
+      emails.append(self.nlg.generate_response(email_act))
+    return self.get_output(d_act_out, emails)
 
-  def get_output(self, d_act, email_body, to_addrs):
+  def get_output(self, d_act, emails):
     output = {
                 'meeting': {
                               'datetime': (None, None), # if everything is set, and meeting is ready to be added to calendar otherwise, None
@@ -37,10 +37,6 @@ class ds(object):
                               },
                           ],
              }
-    output['emails'][0]['body'] = email_body
-    if d_act['act'] == 'finish':
-      output['meeting']['location'] = d_act['slotvals']['location']
-      output['meeting']['datetime'] = (d_act['slotvals']['datetime'], d_act['slotvals']['datetime']+datetime.timedelta(hours=1))
-    else:
-      output['meeting'] = None
+    output['meeting'] = d_act
+    output['emails'] = emails
     return output
