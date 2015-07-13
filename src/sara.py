@@ -158,14 +158,14 @@ def sara_handle():
             fulist.append(addr)
         prev_elist = []
 
-    new_elist = prev_elist.append(eobj.as_string())
+    prev_elist.append(eobj.as_string())
 
     # update database
     res = db.update(
         {'thread_id': thread_id},
         {
             'thread_id': thread_id,
-            'elist': new_elist,
+            'elist': prev_elist,
             'bu': bu,
             'fu': fulist,
         },  upsert = True
@@ -180,13 +180,18 @@ def sara_handle():
 def find_last_involvement(to_addrs, thread_id):
     record = db.find_one({'thread_id': thread_id})
     elist = record['elist']
-    sara_debug(elist[0])
+
+    # sara_debug(elist[0])
 
     for item in reversed(elist):
         em = email.message_from_string(item)
         all_addrs = em['To'] + "," + em['From'] + (","+ em['CC'] if em['CC'] else '')
         if to_addrs <= set(all_addrs):
             return em
+
+    # no involvement found
+    return email.message_from_string(elist[-1])
+
 
 def send(to_addrs, body, thread_id):
     # to_addrs      :   list of addresses
