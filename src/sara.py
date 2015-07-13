@@ -5,8 +5,9 @@ from email_reply_parser import EmailReplyParser
 import os
 import sys
 import random
-import planus.src.cal
+from planus.src.cal import *
 from planus.src.ds import ds
+import re
 
 sys.path.append(os.path.abspath('/var/www/autos'))
 from flask import request
@@ -88,7 +89,7 @@ def sara_handle():
     sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
     header = request.form['headers']
     from_addr = request.form['from']
-    to_addr =  request.form['to']
+    to_addrs =  request.form['to']
 
     try:
         sub = request.form['subject']
@@ -179,6 +180,8 @@ def sara_handle():
 def find_last_involvement(to_addrs, thread_id):
     record = db.find_one({'thread_id': thread_id})
     elist = record['elist']
+    sara_debug(elist[0])
+
     for item in reversed(elist):
         em = email.message_from_string(item)
         all_addrs = em['To'] + "," + em['From'] + (","+ em['CC'] if em['CC'] else '')
@@ -242,20 +245,24 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
           },
 
     'availability': {
-                  'datetime': cal.get_free_slots(re.search("\w+@\w+\.com", bu).group(0)), # list of tuples of datetime objects
-                  'location': "Starbucks",
+                  'dt': get_free_slots(re.search("\w+@\w+\.com", bu).group(0)), # list of tuples of dt objects
+                  'loc': "Starbucks",
                 }
             }
 
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
     output_obj = dsobj.take_turn(input_obj)
-    to_addrs = output_obj['emails']['to']
-    body = output_obj['emails']['body']
+
+
 
     if output_obj['meeting']:
-        cal.send_invite(bu, fulist, output_obj['meeting']['location'], output_obj['meeting']['datetime']['start'], output_obj['meeting']['datetime']['end'])
+        send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
     else:
-        send(to_addrs, body, thread_id)
+
+        for each_email in output_obj['emails']:
+            to_addrs = each_email['to']
+            body = each_email['body']
+            send(to_addrs, body, thread_id)
 
 
     sara_debug("Finished receiving")
