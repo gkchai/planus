@@ -235,13 +235,13 @@ def main():
     #         ([F1], [F2], B, 'Reply-All'),
     # ]
 
-    seq = [
-            (B, [F1], None, 'Compose'),
-            ([F1], B, None, 'Reply-All'),
-            (B, [F1], [F2], 'Reply-To'),
-            ([F1], B, [F2], 'Reply-To'),
-            ([F2], [F1], [F1, B[0]], 'Reply-All'),
-    ]
+    # seq = [
+    #         (B, [F1], None, 'Compose'),
+    #         ([F1], B, None, 'Reply-All'),
+    #         (B, [F1], [F2], 'Reply-To'),
+    #         ([F1], B, [F2], 'Reply-To'),
+    #         ([F2], [F1], [F1, B[0]], 'Reply-All'),
+    # ]
 
     seq = [
             (B, [F1], S, 'Compose')

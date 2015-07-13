@@ -5,11 +5,11 @@ from email_reply_parser import EmailReplyParser
 import os
 import sys
 import random
-import cal
-# from src.ds import ds
+import planus.src.cal
+from planus.src.ds import ds
 
 sys.path.append(os.path.abspath('/var/www/autos'))
-from autoviz import *
+from flask import request
 
 SARA = 'sara@autoscientist.com'
 LOG_DIR = '/var/www/autos/planus/log/'
