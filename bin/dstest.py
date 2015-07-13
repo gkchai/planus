@@ -18,6 +18,7 @@ def main():
     input_obj = get_input(line) # create the input object
     output_obj = testobj.take_turn(input_obj) # call take_turn, every time you get an email from the user
     # print '%d, Out: ' % i, output_obj['emails'][0]['body']
+    print output_obj
     pdb.set_trace() # this is just for testing purposes to see if outputs seem ok.
 
 # function that shows how to generate the input object for sending to ds.take_turn() starting from email_body

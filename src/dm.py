@@ -2,21 +2,10 @@
 import dateutil.parser, pdb
 from planus.src.st import st
 
-# #location
-# # if busy guy mentions
-#   done
-# else:
-#   if no one mentions:
-#     ask everyone
-#   else:
-
-
 class dm(object):
 
   def __init__(self, dialog_id):
     self.st = st(dialog_id)
-    # self.s = {'location':[], 'dt':[], 'duration':[]}
-
 
   def next_act(self, d_act):
     self.st.update_state(d_act)
@@ -24,11 +13,6 @@ class dm(object):
     self.st.add_action(d_act_out)
     return d_act_out
 
-  # def update_users(self):
-  #   self.group_users = set(self.st.s['group'].people.keys())
-  #   self.busy_users = self.st.s['group'].busy_emails
-  #   self.organizer = self.st.s['group'].organizer
-  #   self.free_users = (self.group_users - self.busy_users) - set([self.organizer])
 
   def is_avail_busy_cal(self, dt):
     # for a given datetime value, checks for calendar availability for all busy users involved and returns True if everyone is free at that time
@@ -53,12 +37,13 @@ class dm(object):
     # returns a list of tuple of datetime objects
 
     # temp hard code
-    vals = []
+    dts = {}
     if len(self.st.dt_avail)>0:
       return None
       for k,v in self.st.dt_avail.iteritems():
         for elem in v:
           dtval = elem['value']
+          dts
           if self.is_avail_busy_cal(dtval):
             vals.append({'val': dtval, })
 
@@ -79,6 +64,7 @@ class dm(object):
       d_act['meeting'] = {
         'dt': sums['dt']['val'],
         'loc': sums['loc']['val'],
+        'to': self.st.all,
       }
       e_act = {
                 'act': 'finish',

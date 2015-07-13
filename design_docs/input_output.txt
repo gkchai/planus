@@ -18,13 +18,13 @@ input to DS
             'body': 'main string of the email',
           },
   'availability': {
-                    'datetime': [
+                    'dt': [
                                   {
                                     "start": datetime_object,
                                     "end": datetime_object
                                   },
                                 ],
-                    'location': some_object, # decide when we know more later
+                    'loc': some_object, # decide when we know more later
                   }
 }
 
@@ -32,11 +32,12 @@ output from DS
 ---------------
 {
   'meeting': { # if everything is set, and meeting is ready to be added to calendar otherwise, None
-              'datetime': {
-                            "start": datetime_object,
-                            "end": datetime_object
+              'dt': {
+                            'start': datetime_object,
+                            'end': datetime_object,
+                            'to': set of emails,
                           },
-              'location': 'location string', # if everything is set, location to add to google calendar
+              'loc': 'location string', # if everything is set, location to add to google calendar
             },
   'emails': [
                 {
