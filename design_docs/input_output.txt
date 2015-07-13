@@ -72,3 +72,31 @@ function receive(from_addr, to_addrs, cc_addrs, body)
   dsobj = ds(tid) # if tid is None ds will pass a brand new object
   dsobj.take_turn(input_obj)
 }
+
+
+wit.ai datetime outputs
+-----------------------
+output for "tomorrow"
+          {
+            "suggested": true,
+            "value": "lets meet",
+            "type": "value"
+          }
+output for "tomorrow 4pm"
+              {
+                "type": "value",
+                "value": "2015-07-10T16:00:00.000-07:00",
+                "grain": "hour"
+              }
+output for "lets see tomorrow between 4 and 6pm"
+              {
+                "type": "interval",
+                "from": {
+                  "value": "2015-07-10T04:00:00.000-07:00",
+                  "grain": "hour"
+                },
+                "to": {
+                  "value": "2015-07-10T19:00:00.000-07:00",
+                  "grain": "hour"
+                }
+              },
