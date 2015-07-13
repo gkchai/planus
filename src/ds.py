@@ -21,7 +21,7 @@ class ds(object):
     d_act_out = self.dm.next_act(d_act_in)
     emails = []
     for e_act in d_act_out['emails']:
-      emails.append({'body': self.nlg.generate_response(e_act), 'to': e_act['to']})
+      emails.append({'body': self.nlg.generate_response(e_act, d_act_out['ppl']), 'to': e_act['to']})
     return self.get_output(d_act_out, emails)
 
   def get_output(self, d_act, emails):

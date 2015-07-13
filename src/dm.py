@@ -14,42 +14,55 @@ class dm(object):
     return d_act_out
 
 
-  def is_avail_busy_cal(self, dt):
+  def availability_busy_users_cal(self, dt, users_to_check):
     # for a given datetime value, checks for calendar availability for all busy users involved and returns True if everyone is free at that time
     busy_avail = True
-    for email, user in self.st.meta['ppl'].iteritems():
+    for email in users_to_check:
+      user = self.st.meta['ppl'][email]
       if not user.is_avail(dt):
         busy_avail = False
         break
 
     return busy_avail
 
+
+  def propose_datetime_calendar(self):
+    return None
+
+
   def propose_datetime(self):
+    # returns list of dict, {'val': dtval, 'avail': set(emails), 'to_ask': set(emails)}
+
     # if some datetime values have already been mentioned in the conversation through self.st.s['group'].datetime_avail
     #   choose the top 3 that are open in the calendars of all the busy users involved
     # if the total choices is < 3:
     #   look through the calendars of all the busy users, and add options to get to 3 choices
     # return whatever numbe of choices were proposed by the above
 
-    # TODO: for now, proposals will be exact start datetime values for the meeting. this could be extended to do dateranges later
-
+    # TODO_LATER: for now, proposals will be exact start datetime values for the meeting. this could be extended to do dateranges later
     # TODO: assumed that what this returns will later be added as a value to opt() and update its 'avail' set
-    # returns a list of tuple of datetime objects
 
-    # temp hard code
-    dts = {}
+    # pdb.set_trace()
+    dts = {} # key: dtval and val: set of users available that time
     if len(self.st.dt_avail)>0:
-      return None
-      for k,v in self.st.dt_avail.iteritems():
-        for elem in v:
+      for email, avail_list in self.st.dt_avail.iteritems():
+        for elem in avail_list:
           dtval = elem['value']
-          dts
-          if self.is_avail_busy_cal(dtval):
-            vals.append({'val': dtval, })
+          tmp = dts.setdefault(dtval, set())
+          tmp.add(email)
 
+    proposals = []
+    for dtval, avail_users in dts.iteritems():
+      users_to_check = self.st.meta['busy']
+      users_to_check = users_to_check - avail_users
+      if self.availability_busy_users_cal(dtval, users_to_check) is True:
+        proposals.append({'val': dtval, 'avail': self.st.meta['busy'].union(avail_users), 'to_ask': self.st.meta['free'] - avail_users})
 
+    if len(proposals)==0:
+      return self.propose_datetime_calendar()
     else:
-      return None
+      return proposals
+
 
   def act_policy(self):
     sums = self.summarize()
@@ -124,9 +137,31 @@ class dm(object):
 
     if dts=='confirm' and locs in set(['finish', 'waiting']):
       # E: confirmation can happen to free user thread or individual busy users
-      raise NotImplementedError
+
+      proposals = sums['dt']['val'] # list of dict, {'val': dtval, 'avail': set(emails), 'to_ask': set(emails)}
+      for proposal in proposals:
+        if not proposal['to_ask'].issubset(self.st.meta['free']):
+          # TODO_LATER: implement confirmation to busy users as well
+          raise NotImplementedError
+
+      user_proposals = {} # key: user_email, val: list of proposals
+      for proposal in proposals:
+        for user_email in proposal['to_ask']:
+          tmp = user_proposals.setdefault(user_email, list())
+          tmp.append(proposal)
+
+      e_act = {
+        'act': 'confirm_free',
+        'greet_free': self.st.greeted_free,
+        'user_proposals': user_proposals,
+        'proposals': proposals,
+        'to': self.st.meta['free'],
+      }
+      email_acts.append(e_act)
+      d_act['acts'].append({'act': 'confirm_free', 'proposals': proposals})
 
     d_act['emails'] = email_acts
+    d_act['ppl'] = self.st.meta['ppl']
     return d_act
 
 
@@ -139,6 +174,7 @@ class dm(object):
     # email_acts.append(e_act)
 
   def summarize(self):
+    # pdb.set_trace()
     sumst = {
       'dt': {
         'status': None,
@@ -186,8 +222,7 @@ class dm(object):
       else:
         sumst['dt'] = {
           'status': 'confirm',
-          'val': proposals['vals'],
-          'to': proposals['to_ask'],
+          'val': proposals,
         }
 
     # handle location

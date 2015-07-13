@@ -32,11 +32,11 @@ def get_input(email_body):
                             'to': [
                                       {
                                         'email': '1@gmail.com',
-                                        'first_name': '1'
+                                        'first_name': 'Ananda'
                                       },
                                       {
                                         'email': '2@gmail.com',
-                                        'first_name': '2'
+                                        'first_name': 'Kelly'
                                       },
                                     ],
                             'body': 'main string of the email',

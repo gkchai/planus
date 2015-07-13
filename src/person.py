@@ -4,7 +4,7 @@
 # Dialog System
 class person(object):
 
-  def __init__(self, user_email, first_name=None, utype=None):
+  def __init__(self, user_email, first_name=None, utype='free'):
     self.email = user_email
     self.first_name = first_name
     self.calendar = []                   # list of dict of 'start' and 'end' keys mapping to datetime objects

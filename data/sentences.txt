@@ -1,4 +1,3 @@
-Hey can we meet together?
 lets catch up at Dec 29 at noon at the conference room
 how about we meet next Wed at 5p at your office?
 lets meet sometime tomorrow
@@ -11,3 +10,4 @@ how about today at 5p or tomorrow at 9p at our usual conference room?
 lets meet tomorrow between 3 and 5p?
 Hey, how are you?\nWould you like to meet say next Monday 5pm at Pierpont?\n\nThanks,\nAnanda
 lets meet between 5 and 5.30p at the stadium?
+Hey can we meet together?

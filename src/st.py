@@ -1,4 +1,4 @@
-import dateutil.parser, datetime, heapq, itertools
+import dateutil.parser, datetime, heapq, itertools, pdb
 from planus.src.person import person
 
 # State Tracker
@@ -14,6 +14,7 @@ class st(object):
     self.dt_avail = {}
     self.org = ''
     self.all = set()
+    self.greeted_free = False # tracks if the free users have been greeted in the first ever email
     self.turns = []
     self.meta = {
       'ppl': {},
@@ -35,21 +36,26 @@ class st(object):
     self.dt.sort(lambda x: len(x['avail']), reverse=True)
 
   def update_users(self, users):
+    # update ppl, free, busy from current database
     for user in users:
+      if user['email'] not in self.meta['ppl']:
+        self.meta['ppl'][user['email']] = person(user['email'], user['first_name'])
       if user['email'] not in self.all:
         self.all.add(user['email'])
         self.meta['new'].add(user['email'])
-    # update free busy from current database
+
     self.meta['busy'] = set()
     self.meta['free'] = set()
-    self.ppl = {}
     for user_email in self.all:
-      new = person(user_email)
-      if new.type == 'busy':
+      if user_email not in self.meta['ppl']:
+        p = person(user_email)
+      else:
+        p = self.meta['ppl'][user_email]
+      if p.type == 'busy':
         self.meta['busy'].add(user_email)
-      elif new.type == 'free':
+      elif p.type == 'free':
         self.meta['free'].add(user_email)
-      self.ppl[user_email] = new
+
 
   def update_dt_avail(self, user_email, availability):
     if user_email not in self.dt_avail:
@@ -58,10 +64,12 @@ class st(object):
 
   def update_state(self, d_act):
     info = {'d_act': d_act}
+    self.meta['ppl'] = {}
     if len(self.all)==0:
       # this is the first time program is being called, so set the organizer for this meeting
       self.org = d_act['from']['email']
       self.meta['busy'].add(self.org)
+      self.meta['ppl'][self.org] = person(self.org, d_act['from']['first_name'], 'busy')
     users = d_act['to']+[d_act['from']]
     self.update_users(users)
 
@@ -120,10 +128,27 @@ class st(object):
     # TODO update self.st.s['dt'][value]['asked'] here, and self.st.s['dt'].slot_asked and self.st.s['loc'].slot_asked
     # if suddenly by some chance
 
-    # update state with slots asked in this turn
     for elem in d_act_out['acts']:
+      # update state with slots asked in this turn
       if elem['act']=='req_org':
         self.asked[elem['val']] = True
+
+      # update with free users asked to confirm this turn
+      if elem['act']=='confirm_free':
+        self.greeted_free = True # first greeting to free users has been just established through this email
+        proposals = elem['proposals'] # list of dict, {'val': dtval, 'avail': set(emails), 'to_ask': set(emails)}
+        for proposal in proposals:
+          to_update = None
+          for dtdict in self.dt:
+            if proposal['val']==dtdict['val']:
+              to_update = dtdict
+              break
+          if to_update is None:
+            to_update = {'val': proposal['val'], 'avail': set(), 'asked': set()}
+
+          to_update['asked'] = to_update['asked'].union(proposal['to_ask'])
+          to_update['avail'] = to_update['avail'].union(proposal['avail'])
+
 
 
 # Option handler
