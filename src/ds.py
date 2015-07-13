@@ -8,23 +8,24 @@ from src.nlg import nlg
 # Dialog System
 class ds(object):
 
-  def __init__(self, dialog_id=None):
+  def __init__(self, dialog_id):
+    self.dialog_id = dialog_id
     self.nlu = nlu()
-    self.dm = dm()
+    self.dm = dm(dialog_id)
     self.nlg = nlg()
 
   def take_turn(self, input_obj):
     utterance = input_obj['email']['body']
     d_act_in = input_obj['email']
     d_act_in['nlu'] = self.nlu.get_dialog_act(utterance)
-    d_act_out, emails_act = self.dm.next_act(d_act_in)
-    # pdb.set_trace()
-    for email_act in emails_act:
-      email_body = self.nlg.generate_response(d_act_out)
-    # email_body =
-    return self.get_output(d_act_out, email_body, emails)
+    d_act_out = self.dm.next_act(d_act_in)
+    # print d_act_out
+    emails = []
+    for e_act in d_act_out['emails']:
+      emails.append({'body': self.nlg.generate_response(e_act), 'to': e_act['to']})
+    return self.get_output(d_act_out, emails)
 
-  def get_output(self, d_act, email_body, to_addrs):
+  def get_output(self, d_act, emails):
     output = {
                 'meeting': {
                               'datetime': (None, None), # if everything is set, and meeting is ready to be added to calendar otherwise, None
@@ -32,15 +33,11 @@ class ds(object):
                             },
                 'emails': [
                               {
-                                'to': to_addrs, # list of email ids to cc during sending this email,
+                                'to': [], # list of email ids to cc during sending this email,
                                 'body': '',
                               },
                           ],
              }
-    output['emails'][0]['body'] = email_body
-    if d_act['act'] == 'finish':
-      output['meeting']['location'] = d_act['slotvals']['location']
-      output['meeting']['datetime'] = (d_act['slotvals']['datetime'], d_act['slotvals']['datetime']+datetime.timedelta(hours=1))
-    else:
-      output['meeting'] = None
+    output['meeting'] = d_act['meeting']
+    output['emails'] = emails
     return output
