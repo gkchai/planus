@@ -8,20 +8,21 @@ from src.nlg import nlg
 # Dialog System
 class ds(object):
 
-  def __init__(self, dialog_id=None):
+  def __init__(self, dialog_id):
+    self.dialog_id = dialog_id
     self.nlu = nlu()
-    self.dm = dm()
+    self.dm = dm(dialog_id)
     self.nlg = nlg()
 
   def take_turn(self, input_obj):
     utterance = input_obj['email']['body']
     d_act_in = input_obj['email']
     d_act_in['nlu'] = self.nlu.get_dialog_act(utterance)
-    d_act_out, email_acts = self.dm.next_act(d_act_in)
-    pdb.set_trace()
+    d_act_out = self.dm.next_act(d_act_in)
+    # print d_act_out
     emails = []
-    for email_act in emails_act:
-      emails.append(self.nlg.generate_response(email_act))
+    for e_act in d_act_out['emails']:
+      emails.append({'body': self.nlg.generate_response(e_act), 'to': e_act['to']})
     return self.get_output(d_act_out, emails)
 
   def get_output(self, d_act, emails):
@@ -32,11 +33,11 @@ class ds(object):
                             },
                 'emails': [
                               {
-                                'to': to_addrs, # list of email ids to cc during sending this email,
+                                'to': [], # list of email ids to cc during sending this email,
                                 'body': '',
                               },
                           ],
              }
-    output['meeting'] = d_act
+    output['meeting'] = d_act['meeting']
     output['emails'] = emails
     return output

@@ -1,41 +1,69 @@
 import dateutil.parser, datetime, itertools
-from src.person import group
+from src.person import person
 
 # State Tracker
 class st(object):
 # TODO: agenda_entry can be used for title of the meeting. Or may be the busy + free guys' names
 
-  def __init__(self):
-    self.s = {
-      'loc': [],
-      'dt': [],
-      # 'group': group(),
-      'dt_avail': {},
-      'org': '',
-      'busyu': '',
-      'freeu': '',
-    } # , 'duration': opt(None)
-    # self.s = {'loc': opt(None), 'dt': opt(None), 'group': group(None),} # , 'duration': opt(None)
+  def __init__(self, dialog_id):
+    self.dialog_id = dialog_id
+    self.dt = [] # list of dicts {'val': value, 'avail': [list of emails], 'asked': [list of emails]}
+    self.loc = [] # list of dicts {'val': value, 'from': email, 'turn': turn_mentioned}
+    self.dur = [] # similar to self.loc
+    self.asked = {'loc': False, 'dt': False}
+    self.dt_avail = {}
+    self.org = ''
+    self.all = set()
     self.turns = []
+    self.meta = {
+      'ppl': {},
+      'new': set(),
+      'busy': set(),
+      'free': set(),
+    }
 
-  def set_organizer(self, useremail):
-    self.organizer = useremail
-    self.busy_emails.add(useremail)
+  def write_mongodb(self):
+    self.all = list(self.all)
+    for elem in self.dt:
+      elem['avail'] = list(elem['avail'])
+      elem['asked'] = list(elem['asked'])
+    del self.meta
+    # TODO: write to mongodb
 
-  def update_dt_avail(self, useremail, availability):
-    if useremail not in self.s['dt_avail']:
-      self.s['dt_avail'][useremail] = []
-    self.s['dt_avail'][useremail].append(availability)
+  def update_opts(self):
+    self.loc.sort(lambda x: x['turn'], reverse=True)
+    self.dt.sort(lambda x: len(x['avail']), reverse=True)
+
+  def update_users(self, users):
+    for user in users:
+      if user['email'] not in self.all:
+        self.all.add(user['email'])
+        self.meta['new'].add(user['email'])
+    # update free busy from current database
+    self.meta['busy'] = set()
+    self.meta['free'] = set()
+    self.ppl = {}
+    for user_email in self.all:
+      new = person(user_email)
+      if new.type == 'busy':
+        self.meta['busy'].add(user_email)
+      elif new.type == 'free':
+        self.meta['free'].add(user_email)
+      self.ppl[user_email] = new
+
+  def update_dt_avail(self, user_email, availability):
+    if user_email not in self.dt_avail:
+      self.dt_avail[user_email] = []
+    self.dt_avail[user_email].append(availability)
 
   def update_state(self, d_act):
     info = {'d_act': d_act}
-    if len(self.s['group'].people)==0:
+    if len(self.all)==0:
       # this is the first time program is being called, so set the organizer for this meeting
-      self.s['group'].set_organizer(d_act['from']['email'])
+      self.org = d_act['from']['email']
+      self.meta['busy'].add(self.org)
     users = d_act['to']+[d_act['from']]
-    self.s['group'].update(users)
-    # for slot in ['loc', 'dt']:
-    #   self.s[slot].update_group(self.s['group'])
+    self.update_users(users)
 
     if len(d_act['nlu']['outcomes'])>1:
       print 'More than 1 outcome! chk this case..'
@@ -46,7 +74,7 @@ class st(object):
       # Ideally each location should also have an associated preference as should datetime
       if 'location' in outcome['entities']:
         for loc in outcome['entities']['location']:
-          self.s['loc'].add(loc['value'], d_act['from']['email'], 'avail', len(self.turns))
+          self.loc.append({'val': loc['value'], 'from': d_act['from']['email'], 'turn': len(self.turns)})
 
       # TODO: ideally each object in the state's datetime list should have a preference. What if the person says in the subsequent conversation, that
         # "Oh, actually 6p might work better, but if not I can happily meet at 4. ". An extended version of preference could also be dispreference -
@@ -78,19 +106,24 @@ class st(object):
 
       if 'duration' in outcome['entities']:
         for dur in outcome['entities']['duration']:
-          self.s['duration'].add(dur, d_act['from']['email'], 'avail', len(self.turns))
+          self.dur.append({'val': dur, 'from': d_act['from']['email'], 'turn': len(self.turns)})
           # self.s['duration'].append(dur)
 
     self.turns.append(info)
 
-  def add_action(self, action_taken):
+  def add_action(self, d_act_out):
     last_turn = self.turns.pop()
-    last_turn['action_taken'] = action_taken
+    last_turn['d_act_out'] = d_act_out
     self.turns.append(last_turn)
 
-    # TODO if a particular datetime was proposed by the policy in action_taken, add it to self.s['dt']
+    # TODO if a particular datetime was proposed by the policy in d_act_out, add it to self.s['dt']
     # TODO update self.st.s['dt'][value]['asked'] here, and self.st.s['dt'].slot_asked and self.st.s['loc'].slot_asked
     # if suddenly by some chance
+
+    # update state with slots asked in this turn
+    for elem in d_act_out['acts']:
+      if elem['act']=='req_org':
+        self.asked[elem['val']] = True
 
 
 # Option handler

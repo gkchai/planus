@@ -7,8 +7,8 @@ class nlg(object):
       'confirm': 'Could you confirm if you can make %s?',
       'reqalts': '',
       'finish': 'Thank you for helping me schedule your meeting. You will shortly receive a calendar invite for the meeting set up on %s at %s.',
-      'req_loc': 'Thank you for helping me schedule your meeting. While I work with others, if you could you update me on the meeting location, that would be great.',
-      'req_dt_loc': ('Unfortunately, I was unable to find a slot in your calendar. Could you tell me a set of date and times that are convenient for you?'
+      'req_org_loc': 'Thank you for helping me schedule your meeting. While I work with others, if you could you update me on the meeting location, that would be great.',
+      'req_org_dt_loc': ('Unfortunately, I was unable to find a slot in your calendar. Could you tell me a set of date and times that are convenient for you?'
                      '\n\nIf you have not done so already, you can integrate your calendar with us so I can automatically schedule your meetings.'
                     ),
 
@@ -48,20 +48,20 @@ class nlg(object):
       fillers.append(self.templates['finish'] % (self.expand_datetime_natural(d_act['dt']), d_act['loc']))
       fillers.extend(['#space', '#allset', '#para', '#replyback', '#para', '#thankyou',])
 
-    if d_act['act']=='req_loc':
+    if d_act['act']=='req_org_loc':
       fillers = ['#greet', '#para']
-      fillers.append(self.templates['req_loc'])
+      fillers.append(self.templates['req_org_loc'])
       fillers.extend(['#para', '#thankyou',])
 
-    if d_act['act']=='req_dt_loc':
+    if d_act['act']=='req_org_dt_loc':
       fillers = ['#greet', '#para']
-      fillers.append(self.templates['req_dt_loc'])
+      fillers.append(self.templates['req_org_dt_loc'])
       fillers.extend(['#para', '#thankyou',])
 
-    if d_act['act']=='req_loc':
-      fillers = ['#greet', '#para']
-      fillers.append(self.templates['req_dt_loc'])
-      fillers.extend(['#para', '#thankyou',])
+    # if d_act['act']=='req_org_loc':
+    #   fillers = ['#greet', '#para']
+    #   fillers.append(self.templates['req_org_dt_loc'])
+    #   fillers.extend(['#para', '#thankyou',])
 
 
     # if True:

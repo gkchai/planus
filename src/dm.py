@@ -13,23 +13,32 @@ from src.st import st
 
 class dm(object):
 
-  def __init__(self):
-    self.st = st()
+  def __init__(self, dialog_id):
+    self.st = st(dialog_id)
     # self.s = {'location':[], 'dt':[], 'duration':[]}
 
 
   def next_act(self, d_act):
     self.st.update_state(d_act)
-    pdb.set_trace()
     d_act_out = self.act_policy()
     self.st.add_action(d_act_out)
     return d_act_out
 
-  def update_users(self):
-    self.group_users = set(self.st.s['group'].people.keys())
-    self.busy_users = self.st.s['group'].busy_emails
-    self.organizer = self.st.s['group'].organizer
-    self.free_users = (self.group_users - self.busy_users) - set([self.organizer])
+  # def update_users(self):
+  #   self.group_users = set(self.st.s['group'].people.keys())
+  #   self.busy_users = self.st.s['group'].busy_emails
+  #   self.organizer = self.st.s['group'].organizer
+  #   self.free_users = (self.group_users - self.busy_users) - set([self.organizer])
+
+  def is_avail_busy_cal(self, dt):
+    # for a given datetime value, checks for calendar availability for all busy users involved and returns True if everyone is free at that time
+    busy_avail = True
+    for email, user in self.st.meta['ppl'].iteritems():
+      if not user.is_avail(dt):
+        busy_avail = False
+        break
+
+    return busy_avail
 
   def propose_datetime(self):
     # if some datetime values have already been mentioned in the conversation through self.st.s['group'].datetime_avail
@@ -42,24 +51,32 @@ class dm(object):
 
     # TODO: assumed that what this returns will later be added as a value to opt() and update its 'avail' set
     # returns a list of tuple of datetime objects
-    if self.st.s['group'].organizer
-    return None
+
+    # temp hard code
+    vals = []
+    if len(self.st.dt_avail)>0:
+      return None
+      for k,v in self.st.dt_avail.iteritems():
+        for elem in v:
+          dtval = elem['value']
+          if self.is_avail_busy_cal(dtval):
+            vals.append({'val': dtval, })
+
+
+    else:
+      return None
 
   def act_policy(self):
-    self.update_users()
-    group_users = set(self.st.s['group'].people.keys())
-    busy_users = self.st.s['group'].busy_emails
-    organizer = self.st.s['group'].organizer
-    free_users = (group_users - busy_users) - set([organizer])
-    sums = self.summarize_state()
-    d_act = None
+    sums = self.summarize()
+    d_act = {'meeting': None, 'acts': []}
     email_acts = []
 
     dts = sums['dt']['status']
     locs = sums['loc']['status']
+
     if dts=='finish' and locs=='finish':
       # A: everything is set
-      d_act = {
+      d_act['meeting'] = {
         'dt': sums['dt']['val'],
         'loc': sums['loc']['val'],
       }
@@ -67,46 +84,50 @@ class dm(object):
                 'act': 'finish',
                 'dt': sums['dt']['val'],
                 'loc': sums['loc']['val'],
-                'to': group_emails - busy_users,
+                'to': self.st.all - self.meta['busy'],
               }
       email_acts.append(e_act)
 
-    # if dts=='finish' and locs=='request_org':
-    #   # B: datetime set but not location; ask organizer for location
-    #   e_act = {
-    #             'act': 'req_loc',
-    #             'dt': sums['dt']['val'],
-    #             'to': set([organizer]),
-    #           }
-    #   email_acts.append(e_act)
-
-    if dts=='request_org' and locs=='request_org':
-      # C: could not find datetime from calendar or email, ask organizer
+    if dts=='req_org' and locs=='req_org':
+      # BC: could not find datetime from calendar or email, ask organizer
       e_act = {
-                'act': 'req_dt_loc',
-                'to': set([organizer]),
+                'act': 'req_org_dt_loc',
+                'to': set([self.st.org]),
               }
       email_acts.append(e_act)
+      d_act['acts'].append({'act': 'req_org', 'val': 'dt'})
+      d_act['acts'].append({'act': 'req_org', 'val': 'loc'})
 
-    if dts in set(['new_users', 'waiting', 'confirm', 'finish']) and locs=='request_org':
-      # D: ask organizer for location, meanwhile, do the necessary things with datetime
+    if dts=='req_org' and locs in set(['finish', 'waiting']):
+      # B: could not find datetime from calendar or email, ask organizer
       e_act = {
-                'act': 'req_loc',
-                'to': set([organizer]),
+                'act': 'req_org_dt',
+                'to': set([self.st.org]),
               }
       email_acts.append(e_act)
+      d_act['acts'].append({'act': 'req_org', 'val': 'dt'})
 
-    if dts=='waiting':
-      pass
+    if dts in set(['new_users', 'waiting', 'confirm', 'finish']) and locs=='req_org':
+      # C: ask organizer for location, meanwhile, do the necessary things with datetime
+      e_act = {
+                'act': 'req_org_loc',
+                'to': set([self.st.org]),
+              }
+      email_acts.append(e_act)
+      d_act['acts'].append({'act': 'req_org', 'val': 'loc'})
 
-    if dts=='new_users':
-      # for each newly added user who is a busy user, send a separate email to them, only if necessary. for new free users, add them all to the ongoing thread
+    if dts=='new_users' and locs in set(['finish', 'waiting']):
+      # D: for each newly added user who is a busy user, send a separate email to them, only if necessary. for new free users, add them all to the ongoing thread
+      raise NotImplementedError
       new_free = set()
       for useremail in sumst['dt']['to']:
-        if useremail in busy_users:
+        if useremail in self.meta['busy']:
           self.email_new_busy_users(email_acts, useremail)
-        else:
+        elif useremail in self.meta['free']:
           new_free.add(useremail)
+        else:
+          print 'new user neither in busy nor in free list'
+          raise NotImplementedError
 
       if len(new_free)>0:
         e_act = {
@@ -115,11 +136,12 @@ class dm(object):
                 }
         email_acts.append(e_act)
 
-    if dts=='confirm':
-      # confirmation can happen to free user thread or individual busy users
+    if dts=='confirm' and locs in set(['finish', 'waiting']):
+      # E: confirmation can happen to free user thread or individual busy users
       raise NotImplementedError
 
-    return (d_act, email_acts)
+    d_act['emails'] = email_acts
+    return d_act
 
 
   def email_new_busy_users(self, email_acts, useremail):
@@ -130,61 +152,46 @@ class dm(object):
             }
     # email_acts.append(e_act)
 
-  def summarize_state(self):
-    group_users = set(self.st.s['group'].people.keys())
+  def summarize(self):
     sumst = {
-              'dt': {
-                            'status': None,
-                            'val': None,
-                          },
-              'loc': {
-                            'status': None,
-                            'val': None,
-                          },
-            }
+      'dt': {
+        'status': None,
+        'val': None,
+      },
+      'loc': {
+        'status': None,
+        'val': None,
+      },
+    }
 
     # handle datetime
-    try:
+    if len(self.st.dt)>0:
       # check for the best agreed datetime values
-      slotopts = self.st.s['dt']
-      bestval = slotopts.best_values.peek_top()
-      bestval_stats = slotopts.values[bestval]
-      pdb.set_trace()
-      if bestval_stats['avail'] == group_users:
+      bestdt = self.st.dt[0]
+      if bestdt['avail'] == self.st.all:
         # best datetime value is confirmed by everyone
         sumst['dt'] = {
           'status': 'finish',
-          'val': bestval,
-          # 'to': free_users,
+          'val': bestdt['val'],
         }
       else:
         # if not confirmed by everyone - two possible situations: everyone informed of all values and we're waiting; or someone was added just now
-        new_users = set()
-        for val, valstats in slotopts.values.iteritems():
-          to_ask = group_users - (valstats['avail'] | valstats['asked'])
-          if len(to_ask)==0:
-            # in this state, everyone has been informed about the value val, and Sara is waiting for at least one of the responses
-            pass
-          else:
-            # in this state, someone was just added into our conversation who haven't been informed before about the options
-            new_users = new_users.union(to_ask)
-        if len(new_users)>0:
+        if len(self.st.meta['new'])>0:
           sumst['dt'] = {
             'status': 'new_users',
-            'to': new_users,
+            'to': self.st.meta['new'],
           }
         else:
           sumst['dt'] = {
             'status': 'waiting',
           }
-    except KeyError:
-      pdb.set_trace()
+    else:
       # propose new datetime
       proposals = self.propose_datetime()
       if proposals is None:
-        if self.st.s['dt'].asked_org is False:
+        if self.st.asked['dt'] is False:
           sumst['dt'] = {
-            'status': 'request_org',
+            'status': 'req_org',
           }
         else:
           sumst['dt'] = {
@@ -198,28 +205,15 @@ class dm(object):
         }
 
     # handle location
-    all_locations = self.st.s['loc'].values.keys()
-    if len(all_locations)==1:
+    if len(self.st.loc)>=1:
         sumst['loc'] = {
           'status': 'finish',
-          'val': all_locations[0],
-        }
-    elif len(all_locations)>1:
-      most_recent_location = ''
-      most_recent_turn = -1
-      for loc in all_locations:
-        last_turn_mentioned = self.st.s['loc'].values[loc]['turns_mentioned'][-1]
-        if last_turn_mentioned > most_recent_turn:
-          most_recent_location = loc
-          most_recent_turn = last_turn_mentioned
-        sumst['loc'] = {
-          'status': 'finish',
-          'val': most_recent_location,
+          'val': self.st.loc[0]['val'],
         }
     else:
-      if self.st.s['loc'].asked_org is False:
+      if self.st.asked['loc'] is False:
         sumst['loc'] = {
-          'status': 'request_org',
+          'status': 'req_org',
         }
       else:
         sumst['loc'] = {
