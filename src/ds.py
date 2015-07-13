@@ -1,9 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import pdb, datetime
-from src.nlu import nlu
-from src.dm import dm
-from src.nlg import nlg
+from planus.src.nlu import nlu
+from planus.src.dm import dm
+from planus.src.nlg import nlg
 
 # Dialog System
 class ds(object):

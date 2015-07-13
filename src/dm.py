@@ -1,6 +1,6 @@
 # Dialog Manager
 import dateutil.parser, pdb
-from src.st import st
+from planus.src.st import st
 
 # #location
 # # if busy guy mentions

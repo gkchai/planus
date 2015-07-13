@@ -1,5 +1,5 @@
 import dateutil.parser, datetime, heapq, itertools
-from src.person import group
+from planus.src.person import person
 
 # State Tracker
 class st(object):

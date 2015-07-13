@@ -6,11 +6,11 @@ import sys, pdb, traceback
 from math import log10
 import numpy as np, re
 
-from src import ds
+from planus.src import ds
 
 # Example test file for using an object of type ds()
 def main():
-  for i, line in enumerate(open('data/sentences.txt', 'r')):
+  for i, line in enumerate(open('planus/data/sentences.txt', 'r')):
     testobj = ds.ds('tempid') # For every new dialog, create an object of type ds() -- message ID (aka dialog ID) to be implemented soon.
     # print '\n\n'
     # print '%d, In: ' % i, line

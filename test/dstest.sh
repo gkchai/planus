@@ -3,4 +3,4 @@
 # Usage: bash test/dstest.sh
 #
 #
-python -m bin.dstest
+python -m planus.bin.dstest
