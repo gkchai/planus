@@ -83,7 +83,7 @@ class st(object):
     doc['_id'] = doc['dialog_id']
     doc = convert_sets_lists(doc)
     doc['dt_avail'] = pack_dotfields(doc['dt_avail'])
-    doc['turns'] = []
+    doc['turns'][-1] = 'tmp'
     dialog_db.update({'_id': doc['_id']}, doc, upsert=True)
 
 
