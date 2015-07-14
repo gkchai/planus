@@ -1,10 +1,10 @@
 # module to test sara
 
 SARA = [u'Sara<sara@autoscientist.com>']
-# BUSY_USERS = [u'Bob Busy<busybob15@gmail.com>']
-BUSY_USERS = [u'B<busybob15@gmail.com>']
-# FREE_USERS = [u'Tom Free<freetom15@gmail.com>', u'Jon Free<freejon15@gmail.com>']
-FREE_USERS = [u'F1<freetom15@gmail.com>', u'F2<freejon15@gmail.com>']
+BUSY_USERS = [u'Bob Busy<busybob15@gmail.com>']
+# BUSY_USERS = [u'B<busybob15@gmail.com>']
+FREE_USERS = [u'Tom Free<freetom15@gmail.com>', u'Jon Free<freejon15@gmail.com>']
+# FREE_USERS = [u'F1<freetom15@gmail.com>', u'F2<freejon15@gmail.com>']
 PASSWORD = 'autoscientist'
 
 import smtplib, imaplib, email
@@ -30,7 +30,7 @@ def test_parse_email(email_obj):
     return get_header_obj(email_obj.as_string()), get_first_text_part(email_obj)
 
 def random_body():
-    return "Ok. Let's schedule a meeting at %d %s. %s"%(random.randint(1,10), random.choice(['AM', 'PM']), ' '.join(get_sentences(3)))
+    return "Let's schedule a meeting at %d %s at my conference room. %s"%(random.randint(1,10), random.choice(['AM', 'PM']), ' '.join(get_sentences(2)))
 
 def test_quote_body(msg, body):
 

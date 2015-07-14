@@ -13,6 +13,7 @@ sys.path.append(os.path.abspath('/var/www/autos'))
 from flask import request
 
 SARA = 'sara@autoscientist.com'
+SARA_F = 'Sara <sara@autoscientist.com>'
 LOG_DIR = '/var/www/autos/planus/log/'
 
 import logging
@@ -30,6 +31,8 @@ logger.setLevel(logging.DEBUG)
 # add the handlers to the logger
 # logger.addHandler(handler)
 
+address_dict = {}
+
 from pymongo import MongoClient
 client = MongoClient() # get a client
 db = client.sara.handles # get the database, like a table in sql
@@ -40,13 +43,18 @@ def record_exists(sara_id):
     return (db.find_one({'sara_id':sara_id}) is not None)
 
 def sara_get_body(msg):
+    # sara_debug(msg.as_string())
     maintype = msg.get_content_maintype()
-    if maintype == 'multipart':
+    # if maintype == 'multipart':
+    if msg.is_multipart():
         for part in msg.get_payload():
             if part.get_content_maintype() == 'text':
                 return part.get_payload()
     elif maintype == 'text':
         return msg.get_payload()
+    else:
+        sara_debug('EMAIL TYPE NOT SUPPORTED YET')
+        return 'Sorry, Email type not supported'
 
 def sara_quote(msg):
 
@@ -81,6 +89,16 @@ def sara_sanity(cc, sub):
     return "Pass"
 
 
+def strip_email(string):
+
+    raw = []
+    for item in string.split(','):
+        m = re.search("\w+@\w+\.com", string.lower())
+        each = m.group(0)
+        address_dict[each] = string[0:m.start()-1]
+        raw.append(each)
+    return raw
+
 def sara_handle():
     # pass the message handle to sara and take
     # appropriate action: if message_id doesn't
@@ -88,8 +106,8 @@ def sara_handle():
 
     sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
     header = request.form['headers']
-    from_addr = request.form['from']
-    to_addrs =  request.form['to']
+    from_addr = strip_email(request.form['from']) # is a list
+    to_addrs =  strip_email(request.form['to']) # is a list
 
     try:
         sub = request.form['subject']
@@ -107,13 +125,13 @@ def sara_handle():
         sara_debug('No html body present')
         html = ''
     try:
-        cc_addrs = request.form['cc']
+        cc_addrs = strip_email(request.form['cc'])
     except KeyError:
         sara_debug('CC missing')
-        cc_addrs = ''
+        cc_addrs = []
 
     # all to+cc addresses without sara
-    to_plus_cc_addrs = [addr for addr in (to_addrs + "," + cc_addrs).split(',') if addr != SARA]
+    to_plus_cc_addrs = [addr for addr in (to_addrs + cc_addrs) if addr != SARA]
 
     raw_email = header + "\r\n\r\n" + body
     eobj = email.message_from_string(raw_email)
@@ -152,7 +170,7 @@ def sara_handle():
         #    return "Do Nothing"
 
         # who ever first sent a mail including Sara is the Busy person
-        bu = from_addr
+        bu = from_addr[0]
         fulist = []
         for addr in to_plus_cc_addrs:
             fulist.append(addr)
@@ -173,7 +191,7 @@ def sara_handle():
 
     # do nothing for loopback messages
     if from_addr != SARA:
-        receive(from_addr, to_plus_cc_addrs, eobj, thread_id, fulist, bu)
+        receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
 
     return "Ok"
 
@@ -185,30 +203,27 @@ def find_last_involvement(to_addrs, thread_id):
 
     for item in reversed(elist):
         em = email.message_from_string(item)
-        all_addrs = em['To'] + "," + em['From'] + (","+ em['CC'] if em['CC'] else '')
-        if to_addrs <= set(all_addrs):
-            return em
+        all_addrs = strip_email(em['To']) +  strip_email(em['From']) + (strip_email(em['CC']) if em['CC'] else [])
+        if set(to_addrs) <= set(all_addrs):
+            return em, False
 
-    # no involvement found
-    return email.message_from_string(elist[-1])
+    # no involvement found, so delete quoted text
+    return email.message_from_string(elist[-1]), True
 
 
 def send(to_addrs, body, thread_id):
     # to_addrs      :   list of addresses
-    em = find_last_involvement(to_addrs, thread_id);
+    em, delete = find_last_involvement(to_addrs, thread_id);
+
     if len(to_addrs) > 1:
-        to_addrs = to_addrs[0]
         cc_addrs = ",".join(to_addrs[1:])
     else:
         cc_addrs = ''
 
-    if not em:
-        reply(to_addrs, cc_addrs, body, em, delete=False)
-    else:
-        reply(to_addrs, cc_addrs, body, em, delete=True)
-        # case where B -> S initially where within that email, he asks to setup
-        # meeting with F, so S -> F is the current email, and you will have to
-        # delete quote from B->S before sending S->F
+    reply(to_addrs[0], cc_addrs, body, em, delete)
+    # case where B -> S initially where within that email, he asks to setup
+    # meeting with F, so S -> F is the current email, and you will have to
+    # delete quote from B->S before sending S->F
 
     sara_debug("Finished sending")
 
@@ -228,18 +243,17 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
 
     person_list = []
-    for item in to_plus_cc_addrs + [SARA]:
-        m = re.search("\w+@\w+\.com", item)
+    for item in (to_plus_cc_addrs if to_plus_cc_addrs else [SARA]):
+
         person_list.append({
-                'email': m.group(0),
-                'first_name': item[0:m.start()]
+                'email': item,
+                'first_name': address_dict[item]
                 }
             )
 
-    m = re.search("\w+@\w+\.com", from_addr)
     from_entry = {
-                    'email': m.group(0),
-                    'first_name': from_addr[0:m.start()]
+                    'email': from_addr,
+                    'first_name': address_dict[from_addr]
                 }
 
     input_obj = {
@@ -265,7 +279,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     else:
 
         for each_email in output_obj['emails']:
-            to_addrs = each_email['to']
+            to_addrs = list(each_email['to'])
             body = each_email['body']
             send(to_addrs, body, thread_id)
 
@@ -289,6 +303,7 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
 
     msg = sendgrid.Mail()
     msg.add_to(to_addrs)
+    sara_debug("WHATT"+SARA + ("," + cc_addrs if cc_addrs else ""))
     msg.add_cc(SARA + ("," + cc_addrs if cc_addrs else ""))
     sub = last_email['subject']
     if len(sub) < 3:
@@ -306,11 +321,10 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
         msg.set_text(new_body + "\r\n\r\n> " + sara_quote(last_email))
 
     msg.set_from(SARA)
-    msg.set_headers({"In-Reply-To": last_email["Message-ID"]})
     if last_email['References']:
-        msg.set_headers({"References": last_email['References'] + " " +last_email["Message-ID"]})
+        msg.set_headers({"In-Reply-To": last_email["Message-ID"], "References": last_email['References'] + " " +last_email["Message-ID"]})
     else:
-        msg.set_headers({"References": last_email["Message-ID"]})
+        msg.set_headers({"In-Reply-To": last_email["Message-ID"], "References": last_email["Message-ID"]})
 
     status, msg = sg.send(msg)
 
