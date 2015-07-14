@@ -50,11 +50,12 @@ def sara_get_body(msg):
         for part in msg.get_payload():
             if part.get_content_maintype() == 'text':
                 return part.get_payload()
-    elif maintype == 'text':
-        return msg.get_payload()
+    # elif maintype == 'text':
     else:
-        sara_debug('EMAIL TYPE NOT SUPPORTED YET')
-        return 'Sorry, Email type not supported'
+        return msg.get_payload()
+    # else:
+    #     sara_debug('EMAIL TYPE NOT SUPPORTED YET')
+    #     return 'Sorry, Email type not supported. Content type =' + msg.get_content_maintype()
 
 def sara_quote(msg):
 
@@ -245,6 +246,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     person_list = []
     for item in (to_plus_cc_addrs if to_plus_cc_addrs else [SARA]):
 
+        # sara_debug("INSERTTTTTTT"+item)
         person_list.append({
                 'email': item,
                 'first_name': address_dict[item]
@@ -264,10 +266,13 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
           },
 
     'availability': {
-                  'dt': get_free_slots(re.search("\w+@\w+\.com", bu).group(0)), # list of tuples of dt objects
+                  'dt': get_free_slots(bu), # list of tuples of dt objects
                   'loc': "Starbucks",
                 }
             }
+
+    # sara_debug("INSERTTTTTTT"+input_obj['email']['body'])
+
 
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
     output_obj = dsobj.take_turn(input_obj)
@@ -303,7 +308,6 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
 
     msg = sendgrid.Mail()
     msg.add_to(to_addrs)
-    sara_debug("WHATT"+SARA + ("," + cc_addrs if cc_addrs else ""))
     msg.add_cc(SARA + ("," + cc_addrs if cc_addrs else ""))
     sub = last_email['subject']
     if len(sub) < 3:
