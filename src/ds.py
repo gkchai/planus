@@ -22,7 +22,13 @@ class ds(object):
     emails = []
     for e_act in d_act_out['emails']:
       emails.append({'body': self.nlg.generate_response(e_act, d_act_out['ppl']), 'to': e_act['to']})
+    self.save_dbs()
     return self.get_output(d_act_out, emails)
+
+  def save_dbs(self):
+    for email, person in self.dm.st.meta['ppl'].iteritems():
+      person.save()
+    self.dm.st.save()
 
   def get_output(self, d_act, emails):
     output = {

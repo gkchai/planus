@@ -1,21 +1,69 @@
 import dateutil.parser, datetime, heapq, itertools, pdb
 from planus.src.person import person
+from pymongo import MongoClient
+client = MongoClient() # get a client
+dialog_db = client.db.dialog # get the database, like a table in sql
+
+def instance_helper(v):
+  if isinstance(v, list):
+    v2 = []
+    for elem in v:
+      v2.append(instance_helper(elem))
+    return v2
+  elif isinstance(v, dict):
+    return convert_sets_lists(v)
+  elif isinstance(v, set):
+    return list(v)
+  else:
+    return v
+
+def convert_sets_lists(d):
+  d2 = {}
+  for k,v in d.iteritems():
+    d2[k] = instance_helper(v)
+  return d2
+
+
+def pack_dotfields(d):
+  d2 = []
+  for k,v in d.iteritems():
+    d2.append({'k':k, 'v':v})
+  return d2
+
+def unpack_dotfields(d):
+  d2 = {}
+  for elem in d:
+    d2[elem['k']] = elem['v']
+  return d2
+
 
 # State Tracker
 class st(object):
 # TODO: agenda_entry can be used for title of the meeting. Or may be the busy + free guys' names
 
   def __init__(self, dialog_id):
-    self.dialog_id = dialog_id
-    self.dt = [] # list of dicts {'val': value, 'avail': [list of emails], 'asked': [list of emails]}
-    self.loc = [] # list of dicts {'val': value, 'from': email, 'turn': turn_mentioned}
-    self.dur = [] # similar to self.loc
-    self.asked = {'loc': False, 'dt': False}
-    self.dt_avail = {}
-    self.org = ''
-    self.all = set()
-    self.greeted_free = False # tracks if the free users have been greeted in the first ever email
-    self.turns = []
+    dbrec = dialog_db.find_one({'_id': dialog_id})
+    if dbrec is not None:
+      # if present in db, read from db
+      self.__dict__.update(dbrec)
+      self.all = set(self.all)
+      for elem in self.dt:
+        elem['avail'] = set(elem['avail'])
+        elem['asked'] = set(elem['asked'])
+      self.dt_avail = unpack_dotfields(self.dt_avail)
+    else:
+      # if not in db, use defaults
+      self.dialog_id = dialog_id
+      self.dt = [] # list of dicts {'val': value, 'avail': [list of emails], 'asked': [list of emails]}
+      self.loc = [] # list of dicts {'val': value, 'from': email, 'turn': turn_mentioned}
+      self.dur = [] # similar to self.loc
+      self.asked = {'loc': False, 'dt': False}
+      self.dt_avail = {}
+      self.org = ''
+      self.all = set()
+      self.greeted_free = False # tracks if the free users have been greeted in the first ever email
+      self.turns = []
+
     self.meta = {
       'ppl': {},
       'new': set(),
@@ -23,13 +71,21 @@ class st(object):
       'free': set(),
     }
 
-  def write_mongodb(self):
+
+  def save(self):
     self.all = list(self.all)
     for elem in self.dt:
       elem['avail'] = list(elem['avail'])
       elem['asked'] = list(elem['asked'])
     del self.meta
-    # TODO: write to mongodb
+    # write to db
+    doc = self.__dict__
+    doc['_id'] = doc['dialog_id']
+    doc = convert_sets_lists(doc)
+    doc['dt_avail'] = pack_dotfields(doc['dt_avail'])
+    doc['turns'] = []
+    dialog_db.update({'_id': doc['_id']}, doc, upsert=True)
+
 
   def update_opts(self):
     self.loc.sort(lambda x: x['turn'], reverse=True)
@@ -121,7 +177,10 @@ class st(object):
 
   def add_action(self, d_act_out):
     last_turn = self.turns.pop()
-    last_turn['d_act_out'] = d_act_out
+    last_turn['d_act_out'] = {}
+    for k,v in d_act_out.iteritems():
+      if k!='ppl':
+        last_turn['d_act_out'][k] = d_act_out[k]
     self.turns.append(last_turn)
 
     # TODO if a particular datetime was proposed by the policy in d_act_out, add it to self.s['dt']

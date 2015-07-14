@@ -11,7 +11,7 @@ from planus.src import ds
 # Example test file for using an object of type ds()
 def main():
   for i, line in enumerate(open('planus/data/sentences.txt', 'r')):
-    testobj = ds.ds('tempid') # For every new dialog, create an object of type ds() -- message ID (aka dialog ID) to be implemented soon.
+    testobj = ds.ds('tempid-'+str(i)) # For every new dialog, create an object of type ds() -- message ID (aka dialog ID) to be implemented soon.
     # print '\n\n'
     # print '%d, In: ' % i, line
     # print '\n'
