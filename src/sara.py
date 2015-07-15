@@ -31,7 +31,7 @@ logger.setLevel(logging.DEBUG)
 # add the handlers to the logger
 # logger.addHandler(handler)
 
-address_dict = {}
+address_dict = {SARA: ['Sara', SARA_F]}
 
 from pymongo import MongoClient
 client = MongoClient() # get a client
@@ -96,7 +96,7 @@ def strip_email(string):
     for item in string.split(','):
         m = re.search("\w+@\w+\.com", string.lower())
         each = m.group(0)
-        address_dict[each] = string[0:m.start()-1]
+        address_dict[each] = [string[0:m.start()-2], item]
         raw.append(each)
     return raw
 
@@ -204,7 +204,9 @@ def find_last_involvement(to_addrs, thread_id):
 
     for item in reversed(elist):
         em = email.message_from_string(item)
-        all_addrs = strip_email(em['To']) +  strip_email(em['From']) + (strip_email(em['CC']) if em['CC'] else [])
+        all_addrs = (em['To'].split(',')) +  [em['From']] + (em['CC'].split(',') if em['CC'] else [])
+
+        sara_debug('HERRRRRR'+','.join(to_addrs))
         if set(to_addrs) <= set(all_addrs):
             return em, False
 
@@ -214,6 +216,7 @@ def find_last_involvement(to_addrs, thread_id):
 
 def send(to_addrs, body, thread_id):
     # to_addrs      :   list of addresses
+    sara_debug('HERRRRRR'+','.join(to_addrs))
     em, delete = find_last_involvement(to_addrs, thread_id);
 
     if len(to_addrs) > 1:
@@ -244,18 +247,17 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
 
     person_list = []
-    for item in (to_plus_cc_addrs if to_plus_cc_addrs else [SARA]):
+    for item in to_plus_cc_addrs:
 
-        # sara_debug("INSERTTTTTTT"+item)
         person_list.append({
                 'email': item,
-                'first_name': address_dict[item]
+                'first_name': address_dict[item][0]
                 }
             )
 
     from_entry = {
                     'email': from_addr,
-                    'first_name': address_dict[from_addr]
+                    'first_name': address_dict[from_addr][0]
                 }
 
     input_obj = {
@@ -271,8 +273,6 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
                 }
             }
 
-    # sara_debug("INSERTTTTTTT"+input_obj['email']['body'])
-
 
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
     output_obj = dsobj.take_turn(input_obj)
@@ -285,6 +285,8 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
         for each_email in output_obj['emails']:
             to_addrs = list(each_email['to'])
+            sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
+            to_addrs = [address_dict[item][1] for item in to_addrs]
             body = each_email['body']
             send(to_addrs, body, thread_id)
 
@@ -296,10 +298,10 @@ def adding_others_reply(fulist, last_email):
 
     msg = sendgrid.Mail()
     msg.add_to(last_email['from'])
-    msg.add_cc( ",".join([SARA] + [addr for addr in fulist if addr != last_email['from']]))
+    msg.add_cc( ",".join([SARA_F] + [addr for addr in fulist if addr != last_email['from']]))
     msg.set_subject(last_email['subject'])
     msg.set_text("Adding Others" + "\r\n\r\n> " + sara_quote(last_email))
-    msg.set_from(SARA)
+    msg.set_from(SARA_F)
     msg.set_headers({"In-Reply-To": last_email["Message-ID"], "References": last_email['References'] + " " +last_email["Message-ID"]})
     status, msg = sg.send(msg)
 
@@ -308,7 +310,8 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
 
     msg = sendgrid.Mail()
     msg.add_to(to_addrs)
-    msg.add_cc(SARA + ("," + cc_addrs if cc_addrs else ""))
+    sara_debug("SARA CCCCCC"+SARA_F + ("," + cc_addrs if cc_addrs else ""))
+    msg.add_cc(SARA_F + ("," + cc_addrs if cc_addrs else ""))
     sub = last_email['subject']
     if len(sub) < 3:
         new_sub = 'Re:'+sub
@@ -324,7 +327,7 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete):
     else:
         msg.set_text(new_body + "\r\n\r\n> " + sara_quote(last_email))
 
-    msg.set_from(SARA)
+    msg.set_from(SARA_F)
     if last_email['References']:
         msg.set_headers({"In-Reply-To": last_email["Message-ID"], "References": last_email['References'] + " " +last_email["Message-ID"]})
     else:
