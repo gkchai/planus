@@ -9,6 +9,8 @@ import json, requests
 
 CRLF = "\r\n"
 
+login = "busybob15@gmail.com"
+password = "autoscientist"
 
 def send_invite(from_addr, to_addrs, location, ddtstart, ddtend):
 
@@ -57,7 +59,7 @@ def send_invite(from_addr, to_addrs, location, ddtstart, ddtend):
     mailServer.starttls()
     mailServer.ehlo()
     mailServer.login(login, password)
-    mailServer.sendmail(fro, to_addrs, msg.as_string())
+    mailServer.sendmail(from_addr, to_addrs, msg.as_string())
     mailServer.close()
 
 
@@ -103,8 +105,6 @@ def get_free_slots(addr):
 
 if __name__ == '__main__':
 
-    login = "busybob15@gmail.com"
-    password = "autoscientist"
     attendees = ["freetom15@gmail.com", "freejon15@gmail.com", "gkciitd@gmail.com", 'anandacontact@gmail.com']
     fro = "Bob Busy<busybob15@gmail.com>"
 

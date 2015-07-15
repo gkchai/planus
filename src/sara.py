@@ -278,17 +278,15 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     output_obj = dsobj.take_turn(input_obj)
 
 
+    for each_email in output_obj['emails']:
+        to_addrs = list(each_email['to'])
+        sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
+        to_addrs = [address_dict[item][1] for item in to_addrs]
+        body = each_email['body']
+        send(to_addrs, body, thread_id)
 
-    if output_obj['meeting']:
+    if output_obj['meeting'] is not None:
         send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
-    else:
-
-        for each_email in output_obj['emails']:
-            to_addrs = list(each_email['to'])
-            sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
-            to_addrs = [address_dict[item][1] for item in to_addrs]
-            body = each_email['body']
-            send(to_addrs, body, thread_id)
 
 
     sara_debug("Finished receiving")
