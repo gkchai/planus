@@ -115,10 +115,10 @@ class st(object):
       p = person(user_email)
       self.update_metas_helper(p)
 
-  def update_dt_avail(self, user_email, availabilities):
+  def update_dt_avail(self, user_email, availability):
     if user_email not in self.dt_avail:
       self.dt_avail[user_email] = []
-    self.dt_avail[user_email].append(availabilities)
+    self.dt_avail[user_email].append(availability)
 
     # if potential datetime options are being discussed, update the user's preferences that has been just mentioned if the values match
     if len(self.dt)>0:
@@ -128,11 +128,10 @@ class st(object):
           all_dt_vals[dtdict['val']] = dtdict
         else:
           raise ValueError('st.dt list has duplicate elements with same dtval values')
-      for elem in availabilities:
-        dtval_mentioned = elem['value']
-        if dtval_mentioned in all_dt_vals:
-          all_dt_vals[dtval_mentioned]['asked'].remove(user_email)
-          all_dt_vals[dtval_mentioned]['avail'].add(user_email)
+
+      if availability['value'] in all_dt_vals:
+        all_dt_vals[availability['value']]['asked'].remove(user_email)
+        all_dt_vals[availability['value']]['avail'].add(user_email)
 
 
   def update_state(self, d_act):
