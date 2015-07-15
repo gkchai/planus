@@ -54,7 +54,7 @@ def test_parse_run(seq, test_id):
     subject = "Let's meet ?" + " " + "[TestID: %s]"%test_id
     for idx, item in enumerate(seq):
 
-        body = random_body()
+        body = item[4]
 
         print "-----------------Sending Mail-----------------"
         print "From: ", ','.join(item[0])
@@ -77,8 +77,8 @@ def test_parse_run(seq, test_id):
 
             print "Checking existing mail thread ...",
 
-            while not last_recv_email['Message-ID']:
-                time.sleep(5)
+            while last_recv_email['Message-ID'] is None:
+                time.sleep(20)
                 last_recv_email = test_check_mail(item[0], item[0], "INBOX", test_id)
 
             print "Got Thread\n"
@@ -236,15 +236,16 @@ def main():
     # ]
 
     # seq = [
-    #         (B, [F1], None, 'Compose'),
-    #         ([F1], B, None, 'Reply-All'),
-    #         (B, [F1], [F2], 'Reply-To'),
-    #         ([F1], B, [F2], 'Reply-To'),
-    #         ([F2], [F1], [F1, B[0]], 'Reply-All'),
+    #         (B, [F1], None, 'Compose', random_body()),
+    #         ([F1], B, None, 'Reply-All', random_body()),
+    #         (B, [F1], [F2], 'Reply-To', random_body()),
+    #         ([F1], B, [F2], 'Reply-To', random_body()),
+    #         ([F2], [F1], [F1, B[0]], 'Reply-All', random_body()),
     # ]
 
     seq = [
-            (B, [F1], S, 'Compose')
+            (B, [F1], S, 'Compose', random_body()),
+            # ([F1], S,  None, 'Reply-To', '16 Jul 08:00AM works for me.'),
     ]
 
     test_parse_run(seq, test_id)

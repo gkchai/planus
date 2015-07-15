@@ -39,8 +39,8 @@ db = client.sara.handles # get the database, like a table in sql
 sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
 
 
-def record_exists(sara_id):
-    return (db.find_one({'sara_id':sara_id}) is not None)
+def record_exists(thread_id):
+    return (db.find_one({'thread_id':thread_id}) is not None)
 
 def sara_get_body(msg):
     # sara_debug(msg.as_string())
@@ -274,7 +274,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
             }
 
 
-    dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
+    dsobj = ds(thread_id[1:-1]) # if tid is None ds will pass a brand new object
     output_obj = dsobj.take_turn(input_obj)
 
 
