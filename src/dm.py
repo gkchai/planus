@@ -144,16 +144,9 @@ class dm(object):
           # TODO_LATER: implement confirmation to busy users as well
           raise NotImplementedError
 
-      user_proposals = {} # key: user_email, val: list of proposals
-      for proposal in proposals:
-        for user_email in proposal['to_ask']:
-          tmp = user_proposals.setdefault(user_email, list())
-          tmp.append(proposal)
-
       e_act = {
         'act': 'confirm_free',
         'greet_free': self.st.greeted_free,
-        'user_proposals': user_proposals,
         'proposals': proposals,
         'to': self.st.meta['free'],
       }

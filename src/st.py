@@ -83,7 +83,6 @@ class st(object):
     doc['_id'] = doc['dialog_id']
     doc = convert_sets_lists(doc)
     doc['dt_avail'] = pack_dotfields(doc['dt_avail'])
-    doc['turns'][-1] = 'tmp'
     dialog_db.update({'_id': doc['_id']}, doc, upsert=True)
 
 
@@ -138,6 +137,10 @@ class st(object):
       # Ideally each location should also have an associated preference as should datetime
       if 'location' in outcome['entities']:
         for loc in outcome['entities']['location']:
+          self.loc.append({'val': loc['value'], 'from': d_act['from']['email'], 'turn': len(self.turns)})
+
+      if 'local_search_query' in outcome['entities']:
+        for loc in outcome['entities']['local_search_query']:
           self.loc.append({'val': loc['value'], 'from': d_act['from']['email'], 'turn': len(self.turns)})
 
       # TODO: ideally each object in the state's datetime list should have a preference. What if the person says in the subsequent conversation, that
@@ -202,8 +205,11 @@ class st(object):
             if proposal['val']==dtdict['val']:
               to_update = dtdict
               break
+
           if to_update is None:
+            # new datetime record is being proposed
             to_update = {'val': proposal['val'], 'avail': set(), 'asked': set()}
+            self.dt.append(to_update)
 
           to_update['asked'] = to_update['asked'].union(proposal['to_ask'])
           to_update['avail'] = to_update['avail'].union(proposal['avail'])

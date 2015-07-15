@@ -31,11 +31,6 @@ class nlg(object):
       '#add': '\n\nAlso, ',
     }
 
-    # self.slots_natural = {
-    #   'location': 'location',
-    #   'datetime': 'date and time',
-    # }
-
 
   def expand_list_natural(self, stringlist, appender='and'):
     filler = ''
@@ -78,7 +73,13 @@ class nlg(object):
     if e_act['greet_free']:
       fillers.extend(['#greet_free', '#para'])
 
-    all_users = set(e_act['user_proposals'].keys())
+    user_proposals = {} # key: user_email, val: list of proposals
+    for proposal in e_act['proposals']:
+      for user_email in proposal['to_ask']:
+        tmp = user_proposals.setdefault(user_email, list())
+        tmp.append(proposal)
+
+    all_users = set(user_proposals.keys())
     all_vals = set()
     ask_everyone = True
     for proposal in e_act['proposals']:
@@ -90,7 +91,7 @@ class nlg(object):
       fillers.append(self.templates['confirm_free_everyone'] % self.expand_list_natural_2(all_vals))
     else:
       fillers.extend(['confirm_free_each_opening', '#para'])
-      for user_email, proposal_list in e_act['user_proposals'].iteritems():
+      for user_email, proposal_list in user_proposals.iteritems():
         all_vals = set()
         for proposal in proposal_list:
           all_vals.add(self.expand_datetime_natural(proposal['val']))
@@ -124,17 +125,6 @@ class nlg(object):
       self.handler_confirm_free(fillers, e_act, ppl)
       fillers.extend(['#para', '#thankyou',])
 
-
-    # if e_act['act']=='req_org_loc':
-    #   fillers = ['#greet', '#para']
-    #   fillers.append(self.templates['req_org_dt_loc'])
-    #   fillers.extend(['#para', '#thankyou',])
-
-
-    # if True:
-      # fillers.append(self.templates['request'] % (self.expand_list_natural(e_act['slots_to_req'], appender='and')))
-      # fillers.append(self.templates['confirm'] % (self.expand_list_natural(e_act['slots_to_req'], appender='or')))
-      # fillers.extend(['#para', '#thankyou',])
 
     return self.expand_response(fillers)
 
