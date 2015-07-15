@@ -83,7 +83,7 @@ class dm(object):
                 'act': 'finish',
                 'dt': sums['dt']['val'],
                 'loc': sums['loc']['val'],
-                'to': self.st.all - self.meta['busy'],
+                'to': self.st.all - self.st.meta['busy'],
               }
       email_acts.append(e_act)
 
@@ -120,9 +120,9 @@ class dm(object):
       raise NotImplementedError
       new_free = set()
       for useremail in sumst['dt']['to']:
-        if useremail in self.meta['busy']:
+        if useremail in self.st.meta['busy']:
           self.email_new_busy_users(email_acts, useremail)
-        elif useremail in self.meta['free']:
+        elif useremail in self.st.meta['free']:
           new_free.add(useremail)
         else:
           print 'new user neither in busy nor in free list'
