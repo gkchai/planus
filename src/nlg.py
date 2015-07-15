@@ -43,13 +43,13 @@ class nlg(object):
     return filler
 
 
-  def expand_datetime_natural(self, dtstr):
+  def expand_dtstr_natural(self, dtstr):
     dtobj = dateutil.parser.parse(dtstr)
     return dtobj.strftime('%a %d %b %I:%M%p')
 
-  def expand_datetime_tup_natural(self, dtstr_tup):
-    dtobj_tup = (dateutil.parser.parse(dtstr_tup[0]), dateutil.parser.parse(dtstr_tup[1]))
-    return dtobj_tup[0].strftime('%a %d %b %I:%M%p') + ' to ' + dtobj_tup[1].strftime('%I:%M%p')
+  def expand_dt_startend_natural(self, dt_startend):
+    # dtobj_tup = (dateutil.parser.parse(dtstr_tup[0]), dateutil.parser.parse(dtstr_tup[1]))
+    return dt_startend['start'].strftime('%a %d %b %I:%M%p') + ' to ' + dt_startend['end'].strftime('%I:%M%p')
 
   def greet_names(self, to_addrs, ppl):
     if len(to_addrs)<=4:
@@ -85,7 +85,7 @@ class nlg(object):
     for proposal in e_act['proposals']:
       if proposal['to_ask']!=all_users:
         ask_everyone = False
-      all_vals.add(self.expand_datetime_natural(proposal['val']))
+      all_vals.add(self.expand_dtstr_natural(proposal['val']))
 
     if ask_everyone:
       fillers.append(self.templates['confirm_free_everyone'] % self.expand_list_natural_2(all_vals))
@@ -94,7 +94,7 @@ class nlg(object):
       for user_email, proposal_list in user_proposals.iteritems():
         all_vals = set()
         for proposal in proposal_list:
-          all_vals.add(self.expand_datetime_natural(proposal['val']))
+          all_vals.add(self.expand_dtstr_natural(proposal['val']))
         fillers.append(self.templates['confirm_free_each_following'] % (ppl[user_email].first_name, self.expand_list_natural_2(all_vals)))
         fillers.extend('#para')
 
@@ -105,7 +105,7 @@ class nlg(object):
     fillers.append('#para')
 
     if e_act['act']=='finish':
-      fillers.append(self.templates['finish'] % (self.expand_datetime_tup_natural(e_act['dt']), e_act['loc']))
+      fillers.append(self.templates['finish'] % (self.expand_dt_startend_natural(e_act['dt']), e_act['loc']))
       fillers.extend(['#space', '#allset', '#para', '#replyback', '#para', '#thankyou',])
 
     if e_act['act']=='req_org_loc':

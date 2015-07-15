@@ -1,5 +1,5 @@
 # Dialog Manager
-import dateutil.parser, pdb
+import dateutil.parser, pdb, datetime
 from planus.src.st import st
 
 class dm(object):
@@ -74,14 +74,22 @@ class dm(object):
 
     if dts=='finish' and locs=='finish':
       # A: everything is set
+      dt_start = dateutil.parser.parse(sums['dt']['val'])
+      dt_end = dt_start + datetime.timedelta(minutes=30)
       d_act['meeting'] = {
-        'dt': sums['dt']['val'],
+        'dt': {
+          'start': dt_start,
+          'end': dt_end,
+        },
         'loc': sums['loc']['val'],
         'to': self.st.all,
       }
       e_act = {
                 'act': 'finish',
-                'dt': sums['dt']['val'],
+                'dt': {
+                  'start': dt_start,
+                  'end': dt_end,
+                },
                 'loc': sums['loc']['val'],
                 'to': self.st.all - self.st.meta['busy'],
               }
