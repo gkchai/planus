@@ -1,9 +1,9 @@
 # module to test sara
 
-SARA = [u'Sara<sara@autoscientist.com>']
-BUSY_USERS = [u'Bob Busy<busybob15@gmail.com>']
+SARA = [u'Sara <sara@autoscientist.com>']
+BUSY_USERS = [u'Bob Busy <busybob15@gmail.com>']
 # BUSY_USERS = [u'B<busybob15@gmail.com>']
-FREE_USERS = [u'Tom Free<freetom15@gmail.com>', u'Jon Free<freejon15@gmail.com>']
+FREE_USERS = [u'Tom Free <freetom15@gmail.com>', u'Jon Free <freejon15@gmail.com>']
 # FREE_USERS = [u'F1<freetom15@gmail.com>', u'F2<freejon15@gmail.com>']
 PASSWORD = 'autoscientist'
 
