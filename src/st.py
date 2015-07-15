@@ -90,27 +90,30 @@ class st(object):
     self.loc.sort(lambda x: x['turn'], reverse=True)
     self.dt.sort(lambda x: len(x['avail']), reverse=True)
 
+  def update_metas_helper(self, p):
+    self.meta['ppl'][p.email] = p
+    if p.type == 'busy':
+      self.meta['busy'].add(p.email)
+    elif p.type == 'free':
+      self.meta['free'].add(p.email)
+    else:
+      raise ValueError('user with email %s is neither busy nor free' % p.email)
+
+  # if new users were added, update our records for this dialog
   def update_users(self, users):
     # update ppl, free, busy from current database
     for user in users:
-      if user['email'] not in self.meta['ppl']:
-        self.meta['ppl'][user['email']] = person(user['email'], user['first_name'])
       if user['email'] not in self.all:
+        p = person(user['email'], user['first_name'])
         self.all.add(user['email'])
         self.meta['new'].add(user['email'])
+        self.update_metas_helper(p)
 
-    self.meta['busy'] = set()
-    self.meta['free'] = set()
+  # retrieve and populate self.meta from users present in previous conversations of this dialog
+  def retrieve_users(self):
     for user_email in self.all:
-      if user_email not in self.meta['ppl']:
-        p = person(user_email)
-      else:
-        p = self.meta['ppl'][user_email]
-      if p.type == 'busy':
-        self.meta['busy'].add(user_email)
-      elif p.type == 'free':
-        self.meta['free'].add(user_email)
-
+      p = person(user_email)
+      self.update_metas_helper(p)
 
   def update_dt_avail(self, user_email, availability):
     if user_email not in self.dt_avail:
@@ -119,12 +122,13 @@ class st(object):
 
   def update_state(self, d_act):
     info = {'d_act': d_act}
-    self.meta['ppl'] = {}
     if len(self.all)==0:
       # this is the first time program is being called, so set the organizer for this meeting
       self.org = d_act['from']['email']
       self.meta['busy'].add(self.org)
       self.meta['ppl'][self.org] = person(self.org, d_act['from']['first_name'], 'busy')
+
+    self.retrieve_users()
     users = d_act['to']+[d_act['from']]
     self.update_users(users)
 
