@@ -1,9 +1,9 @@
 # module to test sara
 
-SARA = [u'Sara <sara@autoscientist.com>']
-BUSY_USERS = [u'Bob Busy <busybob15@gmail.com>']
+SARA = ['Sara <sara@autoscientist.com>']
+BUSY_USERS = ['Bob Busy <busybob15@gmail.com>']
 # BUSY_USERS = [u'B<busybob15@gmail.com>']
-FREE_USERS = [u'Tom Free <freetom15@gmail.com>', u'Jon Free <freejon15@gmail.com>']
+FREE_USERS = ['Tom Free <freetom15@gmail.com>', 'Jon Free <freejon15@gmail.com>']
 # FREE_USERS = [u'F1<freetom15@gmail.com>', u'F2<freejon15@gmail.com>']
 PASSWORD = 'autoscientist'
 
@@ -12,6 +12,22 @@ import re, datetime, pdb
 import string, random, time
 from loremipsum import get_sentences
 import sys, traceback
+
+def strip_email(obj):
+
+    if isinstance(obj, list):
+        ret = []
+        for e in obj:
+            m = re.search("\w+@\w+\.com", e.lower())
+            ret.append(m.group(0))
+        return ret
+
+
+    if isinstance(obj, str):
+        m = re.search("\w+@\w+\.com", obj.lower())
+        return m.group(0)
+
+
 
 def test_parse_email(email_obj):
     def get_header_obj(string):
@@ -76,9 +92,10 @@ def test_parse_run(seq, test_id):
             last_recv_email =  email.Message.Message()
 
             print "Checking existing mail thread ...",
+            time.sleep(30)
 
             while last_recv_email['Message-ID'] is None:
-                time.sleep(20)
+                time.sleep(10)
                 last_recv_email = test_check_mail(item[0], item[0], "INBOX", test_id)
 
             print "Got Thread\n"
@@ -136,14 +153,14 @@ def test_send(from_addr, to_addrs, cc_addrs, subject, new_body, last_email, repl
             references = ""
 
         if reply_type == 'Reply-To':
-            assert set(last_email['From'].split(",")) <= set(to_addrs), "To: address not complete for Reply-To type mail"
+            assert set(strip_email(last_email['From'].split(","))) <= set(strip_email(to_addrs)), "To: address not complete for Reply-To type mail"
 
         if reply_type == 'Reply-All':
 
             to_plus_cc = (last_email['To'] + ("," + last_email['CC'] if last_email['CC'] else '')).split(",")
             to_plus_cc_minus_self = [x for x in to_plus_cc if x != from_addr[0]]
 
-            assert set([last_email['From']]) <= set(to_addrs) and ((set(to_plus_cc_minus_self) <= set(cc_addrs if cc_addrs else '')) if to_plus_cc_minus_self else True), "To: and CC: addresses not complete for Reply-All type mail "
+            assert set(strip_email([last_email['From']])) <= set(strip_email(to_addrs)) and ((set(strip_email(to_plus_cc_minus_self)) <= set(strip_email(cc_addrs if cc_addrs else ''))) if to_plus_cc_minus_self else True), "To: and CC: addresses not complete for Reply-All type mail "
 
         headers = headers + "\r\n" + "In-Reply-To: " + reply_to
         if references:
@@ -210,9 +227,12 @@ def test_check_mail(self_addr, to_addr, mailfolder, test_id):
           return
 
       msg = email.message_from_string(data[0][1])
+      print msg['To']
+      print (msg['To'] == to_addr)
+
       srch = re.search("\[TestID: %s\]"%test_id, msg['Subject'])
 
-      if srch and (set((msg['To'] + (',' + msg['CC'] if msg['CC'] else '')).split(',')) >=  set(to_addr)):
+      if srch and (strip_email(to_addr[0]) in ((msg['To'] + msg['CC']))):
         M.close()
         M.logout()
         return msg
