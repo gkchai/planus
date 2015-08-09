@@ -210,7 +210,7 @@ def sara_handle(lastHistoryID):
                     )
 
                 # do nothing for loopback messages
-                if from_addr != SARA:
+                # if from_addr != SARA:
                     # receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
 
     return retHistoryID
