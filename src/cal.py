@@ -119,8 +119,6 @@ def get_free_slots(addr):
                 print "Credentials Refreshed for %s"%addr
 
         resp = auth_inst.access(credentials,'https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY', method='POST', body=json.dumps(request_body), headers=headers)
-        pdb.set_trace()
-
 
         # r = requests.post("https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY", data=json.dumps(request_body), headers=headers)
 

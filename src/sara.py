@@ -7,8 +7,9 @@ import sys
 import random
 from planus.src.cal import *
 from planus.src.ds import ds
+from plauns.src.google import *
 import re
-
+import base64
 sys.path.append(os.path.abspath('/var/www/autos'))
 from flask import request
 
@@ -37,6 +38,8 @@ from pymongo import MongoClient
 client = MongoClient() # get a client
 db = client.sara.handles # get the database, like a table in sql
 sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
+gm = create_gmail_client()
+
 
 
 def record_exists(thread_id):
@@ -75,7 +78,7 @@ def random_body():
     return "Hi! This is Sara. Let's schedule a meeting at %d %s. \n Regards,\n Sara"%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string):
-    logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
+    logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(data['from'],data['to'], data['subject'], EmailReplyParser.parse_reply(data['text']), string))
 
 def sara_sanity(cc, sub):
     # sanity check to exclude type of communications we
@@ -105,28 +108,29 @@ def sara_handle():
     # appropriate action: if message_id doesn't
     # exist in database then create a new thread
 
-    sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
-    header = request.form['headers']
-    from_addr = strip_email(request.form['from']) # is a list
-    to_addrs =  strip_email(request.form['to']) # is a list
+    data = base64.urlsafe_b64decode(request['message']['data'])
+
+    header = data['headers']
+    from_addr = strip_email(data['from']) # is a list
+    to_addrs =  strip_email(data['to']) # is a list
 
     try:
-        sub = request.form['subject']
+        sub = data['subject']
     except KeyError:
         sara_debug('Subject missing')
         sub = ''
     try:
-        body = request.form['text']
+        body = data['text']
     except KeyError:
         sara_debug('No body present')
         body = ''
     try:
-        html = request.form['html']
+        html = data['html']
     except KeyError:
         sara_debug('No html body present')
         html = ''
     try:
-        cc_addrs = strip_email(request.form['cc'])
+        cc_addrs = strip_email(data['cc'])
     except KeyError:
         sara_debug('CC missing')
         cc_addrs = []
