@@ -265,7 +265,7 @@ def main():
 
     seq = [
             (B, [F1], S, 'Compose', random_body()),
-            ([F1], S,  None, 'Reply-To', '16 Jul 08:00AM works.'),
+            # ([F1], S,  None, 'Reply-To', '16 Jul 08:00AM works.'),
     ]
 
     test_parse_run(seq, test_id)
