@@ -76,8 +76,10 @@ CONFIG = {
         'class_': oauth2.Google,
         'consumer_key': '858092596350-33k2ig53prtk6hct298q4lk8i4o01ubn.apps.googleusercontent.com',
         'consumer_secret': 'V4LROfAEKq7N7GZcKeeIK1rV',
-        'id': 1,
         'offline': True,
+        'id': 1,
+        'access_type' : 'online',
+        'approval_prompt' : 'auto',
         'scope': oauth2.Google.user_info_scope + ['https://www.googleapis.com/auth/calendar'],
         # '_apis': {
         #     'List your calendars': ('GET', 'https://www.googleapis.com/calendar/v3/users/me/calendarList'),
@@ -110,7 +112,15 @@ def get_free_slots(addr):
 
         headers = {'content-type': 'application/json; charset=utf-8'}
 
-        resp = auth_inst.access(record['credentials'],'https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY', method='POST', body=json.dumps(request_body), headers=headers)
+        credentials = auth_inst.credentials(record['credentials'])
+        if credentials.expire_soon(1200):
+            credentials.refresh(force=True)
+            if response.status == 200:
+                print "Credentials Refreshed for %s"%addr
+
+        resp = auth_inst.access(credentials,'https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY', method='POST', body=json.dumps(request_body), headers=headers)
+        pdb.set_trace()
+
 
         # r = requests.post("https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY", data=json.dumps(request_body), headers=headers)
 
