@@ -7,7 +7,7 @@ import sys
 import random
 from planus.src.cal import *
 from planus.src.ds import ds
-from plauns.src.google import *
+from planus.src import google
 import re
 import base64
 sys.path.append(os.path.abspath('/var/www/autos'))
@@ -38,7 +38,7 @@ from pymongo import MongoClient
 client = MongoClient() # get a client
 db = client.sara.handles # get the database, like a table in sql
 sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
-gm = create_gmail_client()
+gm = google.create_gmail_client()
 
 
 
@@ -78,7 +78,7 @@ def random_body():
     return "Hi! This is Sara. Let's schedule a meeting at %d %s. \n Regards,\n Sara"%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string):
-    logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(data['from'],data['to'], data['subject'], EmailReplyParser.parse_reply(data['text']), string))
+    logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(request.form['from'],request.form['to'], request.form['subject'], EmailReplyParser.parse_reply(request.form['text']), string))
 
 def sara_sanity(cc, sub):
     # sanity check to exclude type of communications we
@@ -109,94 +109,98 @@ def sara_handle():
     # exist in database then create a new thread
 
     data = base64.urlsafe_b64decode(request['message']['data'])
+    lastHistoryID = data['historyId']
+    chnages = google.ListHistory(gm, 'me', lastHistoryID)
 
-    header = data['headers']
-    from_addr = strip_email(data['from']) # is a list
-    to_addrs =  strip_email(data['to']) # is a list
+    for history in changes:
+        for raw_email in base64.urlsafe_b64decode(history['messagesAdded']['raw']):
 
-    try:
-        sub = data['subject']
-    except KeyError:
-        sara_debug('Subject missing')
-        sub = ''
-    try:
-        body = data['text']
-    except KeyError:
-        sara_debug('No body present')
-        body = ''
-    try:
-        html = data['html']
-    except KeyError:
-        sara_debug('No html body present')
-        html = ''
-    try:
-        cc_addrs = strip_email(data['cc'])
-    except KeyError:
-        sara_debug('CC missing')
-        cc_addrs = []
+            eobj = email.message_from_string(raw_email)
 
-    # all to+cc addresses without sara
-    to_plus_cc_addrs = [addr for addr in (to_addrs + cc_addrs) if addr != SARA]
+            header = eobj['headers']
+            from_addr = strip_email(eobj['from']) # is a list
+            to_addrs =  strip_email(eobj['to']) # is a list
 
-    raw_email = header + "\r\n\r\n" + body
-    eobj = email.message_from_string(raw_email)
+            try:
+                sub = eobj['subject']
+            except KeyError:
+                sara_debug('Subject missing')
+                sub = ''
+            try:
+                body = eobj['text']
+            except KeyError:
+                sara_debug('No body present')
+                body = ''
+            try:
+                html = eobj['html']
+            except KeyError:
+                sara_debug('No html body present')
+                html = ''
+            try:
+                cc_addrs = strip_email(eobj['cc'])
+            except KeyError:
+                sara_debug('CC missing')
+                cc_addrs = []
 
-    # ---------------------------------------------------------------------
-    #                       RFC 2822
-    # https://tools.ietf.org/html/rfc2822#section-3.6.4
-    # ---------------------------------------------------------------------
-    try:
-        references = eobj.get('References')
-    except KeyError:
-        references = ''
+            # all to+cc addresses without sara
+            to_plus_cc_addrs = [addr for addr in (to_addrs + cc_addrs) if addr != SARA]
 
-    if references:
-        thread_id = references.split(' ')[0]
-    else:
-        thread_id = eobj.get('Message-ID')
+            # ---------------------------------------------------------------------
+            #                       RFC 2822
+            # https://tools.ietf.org/html/rfc2822#section-3.6.4
+            # ---------------------------------------------------------------------
+            try:
+                references = eobj.get('References')
+            except KeyError:
+                references = ''
 
-    if record_exists(thread_id):
-        sara_debug('Existing thread')
-        record = db.find_one({'thread_id': thread_id})
-        prev_elist = record['elist']
-        # anyone in the To/CC field apart from busy person
-        # and Sara is the free person
-        # TODO: Also remove other busy users who are also using Sara
+            if references:
+                thread_id = references.split(' ')[0]
+            else:
+                thread_id = eobj.get('Message-ID')
 
-        fulist = record['fu']
-        bu = record['bu']
-        for addr in to_plus_cc_addrs:
-            if (addr not in fulist) and (addr != bu):
-                fulist.append(addr)
+            if record_exists(thread_id):
+                sara_debug('Existing thread')
+                record = db.find_one({'thread_id': thread_id})
+                prev_elist = record['elist']
+                # anyone in the To/CC field apart from busy person
+                # and Sara is the free person
+                # TODO: Also remove other busy users who are also using Sara
 
-    else:
-        sara_debug('New thread')
-        # if sara_sanity(cc, sub) == 'Fail':
-        #    return "Do Nothing"
+                fulist = record['fu']
+                bu = record['bu']
+                for addr in to_plus_cc_addrs:
+                    if (addr not in fulist) and (addr != bu):
+                        fulist.append(addr)
 
-        # who ever first sent a mail including Sara is the Busy person
-        bu = from_addr[0]
-        fulist = []
-        for addr in to_plus_cc_addrs:
-            fulist.append(addr)
-        prev_elist = []
+            else:
+                sara_debug('New thread')
+                # if sara_sanity(cc, sub) == 'Fail':
+                #    return "Do Nothing"
 
-    prev_elist.append(eobj.as_string())
+                # who ever first sent a mail including Sara is the Busy person
+                bu = from_addr[0]
+                fulist = []
+                for addr in to_plus_cc_addrs:
+                    fulist.append(addr)
+                prev_elist = []
 
-    # update database
-    res = db.update(
-        {'thread_id': thread_id},
-        {
-            'thread_id': thread_id,
-            'elist': prev_elist,
-            'bu': bu,
-            'fu': fulist,
-        },  upsert = True
-        )
+            prev_elist.append(eobj.as_string())
 
-    # do nothing for loopback messages
-    if from_addr != SARA:
-        receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
+            # update database
+            res = db.update(
+                {'thread_id': thread_id},
+                {
+                    'thread_id': thread_id,
+                    'elist': prev_elist,
+                    'bu': bu,
+                    'fu': fulist,
+                },  upsert = True
+                )
+
+            # do nothing for loopback messages
+            if from_addr != SARA:
+                receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
 
     return "Ok"
 
