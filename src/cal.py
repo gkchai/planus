@@ -77,6 +77,7 @@ CONFIG = {
         'consumer_key': '858092596350-33k2ig53prtk6hct298q4lk8i4o01ubn.apps.googleusercontent.com',
         'consumer_secret': 'V4LROfAEKq7N7GZcKeeIK1rV',
         'id': 1,
+        'offline': True,
         'scope': oauth2.Google.user_info_scope + ['https://www.googleapis.com/auth/calendar'],
         # '_apis': {
         #     'List your calendars': ('GET', 'https://www.googleapis.com/calendar/v3/users/me/calendarList'),
