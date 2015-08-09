@@ -114,7 +114,7 @@ def get_free_slots(addr):
 
         credentials = auth_inst.credentials(record['credentials'])
         if credentials.expire_soon(1200):
-            credentials.refresh(force=True)
+            response = credentials.refresh(force=True)
             if response.status == 200:
                 print "Credentials Refreshed for %s"%addr
 
