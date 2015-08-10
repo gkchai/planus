@@ -117,6 +117,15 @@ def get_free_slots(addr):
             response = credentials.refresh(force=True)
             if response.status == 200:
                 print "Credentials Refreshed for %s"%addr
+                res = db.update(
+                  {'email_id': addr},
+                  {
+                      'email_id': addr,
+                      'credentials': credentials.serialize(),
+                      'log': record['log'],
+                  },  upsert = True
+                  )
+
 
         resp = auth_inst.access(credentials,'https://www.googleapis.com/calendar/v3/freeBusy?fields=calendars%2CtimeMax%2CtimeMin&key=AIzaSyAHNN0vG1zmUpQyHeMVyWCV3IZbM-HDoWY', method='POST', body=json.dumps(request_body), headers=headers)
 

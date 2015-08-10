@@ -13,6 +13,7 @@ import base64
 sys.path.append(os.path.abspath('/var/www/autos'))
 from flask import request
 from email.mime.text import MIMEText
+from pprint import pprint
 
 
 SARA = 'sara@autoscientist.com'
@@ -88,7 +89,7 @@ def sara_debug(string, eobj=None):
         logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(eobj.get_payload()), string))
 
     else:
-        logger.debug('[SARA]::', string)
+        logger.debug('[SARA]::%s'%(string))
 
 def sara_sanity(cc, sub):
     # sanity check to exclude type of communications we
@@ -113,7 +114,6 @@ def strip_email(string):
         raw.append(each)
     return raw
 
-from pprint import pprint
 
 def sara_handle():
     # pass the message handle to sara and take
@@ -176,7 +176,7 @@ def sara_message_handle(message_id, thread_id):
     # ---------------------------------------------------------------------
 
     references = eobj['References']
-    if references is None:
+    if references is not None:
         raw_id = references.split(' ')[0]
     else:
         raw_id = eobj.get('Message-ID')
@@ -199,7 +199,7 @@ def sara_message_handle(message_id, thread_id):
             prev_elist.append(eobj.as_string())
             prev_mlist.append(message_id)
         else:
-            sara_debug('Existing thread', eobj)
+            sara_debug('Existing message', eobj)
 
         fulist = record['fu']
         bu = record['bu']
@@ -287,7 +287,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
             adding_others_reply(fulist, current_email)
             to_plus_cc_addrs = fulist
 
-
+    to_plus_cc_addrs.append(SARA)
     person_list = []
     for item in to_plus_cc_addrs:
 
@@ -315,7 +315,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
                 }
             }
 
-
+    pprint(input_obj)
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
     output_obj = dsobj.take_turn(input_obj)
 
@@ -344,7 +344,7 @@ def adding_others_reply(fulist, last_email):
     msg.add_header({'In-Reply-To': last_email['Message-ID'], 'References': last_email['References'] + ' ' +last_email['Message-ID']})
     message = {'raw': base64.b64encode(msg.as_string())}
     result = google.SendMessage(gm, 'me', message)
-    if result in not None:
+    if result is not None:
         return 'success'
 
 
@@ -377,5 +377,5 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
 
     message = {'threadID': thread_id, 'raw': base64.b64encode(msg.as_string())}
     result = google.SendMessage(gm, 'me', message, thread_id)
-    if result in not None:
+    if result is not None:
         return 'success'
