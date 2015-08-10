@@ -412,6 +412,8 @@ def create_pubsub_client(http=None):
     return pubsub
 
 
+
+
 """Send an email message from the user's account.
 """
 
@@ -427,7 +429,7 @@ import os
 from apiclient import errors
 
 
-def SendMessage(service, user_id, message):
+def SendMessage(service, user_id, message, thread_id=None):
   """Send an email message.
 
   Args:
@@ -440,8 +442,15 @@ def SendMessage(service, user_id, message):
     Sent Message.
   """
   try:
-    message = (service.users().messages().send(userId=user_id, body=message)
-               .execute())
+    if thread_id is None:
+        message = (service.users().messages().send(userId=user_id, body=message)
+                   .execute())
+    else:
+
+        assert(message['threadId'] == thread_id)
+        message = service.users().messages().insert(userId=user_id,
+        id=thread_id, body=message).execute()
+
     print 'Message Id: %s' % message['id']
     return message
   except errors.HttpError, error:
@@ -569,7 +578,6 @@ def GetMimeMessage(service, user_id, msg_id):
     print 'Message snippet: %s' % message['snippet']
 
     msg_str = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
-
     mime_msg = email.message_from_string(msg_str)
 
     return mime_msg
