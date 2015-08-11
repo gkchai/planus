@@ -317,22 +317,28 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
     pprint(input_obj)
     dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
-    output_obj = dsobj.take_turn(input_obj)
 
 
-    for each_email in output_obj['emails']:
-        to_addrs = list(each_email['to'])
-        sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
-        to_addrs = [address_dict[item][1] for item in to_addrs]
-        body = each_email['body']
-        send(to_addrs, body, thread_id)
+    try:
+        output_obj = dsobj.take_turn(input_obj)
 
-    if output_obj['meeting'] is not None:
-        send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
 
-    sara_debug("Finished receiving")
-    return 'success'
 
+        for each_email in output_obj['emails']:
+            to_addrs = list(each_email['to'])
+            sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
+            to_addrs = [address_dict[item][1] for item in to_addrs]
+            body = each_email['body']
+            send(to_addrs, body, thread_id)
+
+        if output_obj['meeting'] is not None:
+            send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
+
+        sara_debug("Finished receiving")
+        return 'success'
+
+    except:
+        return 'Failure'
 
 def adding_others_reply(fulist, last_email):
 
