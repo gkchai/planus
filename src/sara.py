@@ -86,7 +86,7 @@ def random_body():
 
 def sara_debug(string, eobj=None):
     if eobj is not None:
-        logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(eobj.get_payload()), string))
+        logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(sara_get_body(eobj)), string))
 
     else:
         logger.debug('[SARA]::%s'%(string))
@@ -108,11 +108,12 @@ def strip_email(string):
 
     raw = []
     for item in string.split(','):
-        m = re.search("\w+@\w+\.com", string.lower())
+        m = re.search("[\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}", string.lower())
         each = m.group(0)
         address_dict[each] = [string[0:m.start()-2], item]
         raw.append(each)
     return raw
+
 
 
 def sara_handle():
@@ -120,9 +121,9 @@ def sara_handle():
     # appropriate action: if message_id doesn't
     # exist in database then create a new thread
 
-    record = dbh.find_one()
+    record = dbh.find_one({'type': 'lastHistoryId'})
     if record is None:
-        lastHistoryID = 2193
+        lastHistoryID = 2506
     else:
         lastHistoryID = record['historyId']
 
@@ -131,7 +132,7 @@ def sara_handle():
     data = json.loads(base64.urlsafe_b64decode(request.json['message']['data'].encode("utf-8")))
     sara_debug('Pushed History=%d, Current History=%d'%(data['historyId'], lastHistoryID))
 
-    dbh.insert({'historyId': data['historyId']})
+
     pprint(changes)
 
     for history in changes:
@@ -142,6 +143,13 @@ def sara_handle():
                 thread_id = messages['message']['threadId']
                 sara_message_handle(message_id, thread_id)
 
+    res = dbh.update(
+        {'type': 'lastHistoryId'},
+        {
+            'type': 'lastHistoryId',
+            'historyId': data['historyId'],
+        },  upsert = True
+        )
 
 
 def sara_message_handle(message_id, thread_id):
@@ -158,7 +166,7 @@ def sara_message_handle(message_id, thread_id):
     if sub is None:
         sara_debug('Subject missing', eobj)
 
-    body = eobj.get_payload()
+    body = eobj['body']
     if body is None:
         sara_debug('No body present', eobj)
 
@@ -322,8 +330,6 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
     try:
         output_obj = dsobj.take_turn(input_obj)
 
-
-
         for each_email in output_obj['emails']:
             to_addrs = list(each_email['to'])
             sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
@@ -334,10 +340,14 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
         if output_obj['meeting'] is not None:
             send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
 
-        sara_debug("Finished receiving")
+        sara_debug("Finished receiving...Returning")
         return 'success'
 
-    except:
+    except Exception as e:
+
+        print e
+        print sys.exc_info()[0]
+        sara_debug("Failed receiving...Returning")
         return 'Failure'
 
 def adding_others_reply(fulist, last_email):
@@ -362,9 +372,10 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
         msg = MIMEText(new_body + "\r\n\r\n> " + sara_quote(last_email))
 
     msg['to'] = to_addrs
-    sara_debug("SARA CCCCCC"+SARA_F + ("," + cc_addrs if cc_addrs else ""))
 
     msg['cc'] = SARA_F + ("," + cc_addrs if cc_addrs else "")
+    sara_debug("SARA CCCCCC"+SARA_F + ("," + cc_addrs if cc_addrs else ""))
+
     sub = last_email['subject']
     if len(sub) < 3:
         new_sub = 'Re:'+sub
@@ -376,12 +387,16 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
     msg['subject'] = new_sub
     msg['from'] = SARA_F
 
-    if last_email['References']:
-        msg.add_header({"In-Reply-To": last_email["Message-ID"], "References": last_email['References'] + " " +last_email["Message-ID"]})
-    else:
-        msg.add_header({"In-Reply-To": last_email["Message-ID"], "References": last_email["Message-ID"]})
+    msg.add_header("In-Reply-To", last_email["Message-ID"])
 
-    message = {'threadID': thread_id, 'raw': base64.b64encode(msg.as_string())}
+    if last_email['References'] is not None:
+        msg.add_header("References", last_email['References'] + " " +last_email["Message-ID"])
+    else:
+        msg.add_header("References", last_email["Message-ID"])
+
+
+    message = {'threadId': thread_id, 'raw': base64.b64encode(msg.as_string())}
     result = google.SendMessage(gm, 'me', message, thread_id)
+
     if result is not None:
         return 'success'

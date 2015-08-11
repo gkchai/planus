@@ -442,14 +442,8 @@ def SendMessage(service, user_id, message, thread_id=None):
     Sent Message.
   """
   try:
-    if thread_id is None:
-        message = (service.users().messages().send(userId=user_id, body=message)
+    message = (service.users().messages().send(userId=user_id, body=message)
                    .execute())
-    else:
-
-        assert(message['threadId'] == thread_id)
-        message = service.users().messages().insert(userId=user_id,
-        id=thread_id, body=message).execute()
 
     print 'Message Id: %s' % message['id']
     return message
