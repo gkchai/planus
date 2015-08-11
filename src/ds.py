@@ -17,6 +17,19 @@ class ds(object):
   def take_turn(self, input_obj):
     utterance = input_obj['email']['body']
     d_act_in = input_obj['email']
+
+    ####### gkchai ########
+    if input_obj['availability']['dt'] is None:
+
+      d_act_in['nlu'] = self.nlu.get_dialog_act(utterance)
+      d_act_out = self.dm.next_act(d_act_in)
+      emails = []
+      for e_act in d_act_out['emails']:
+        emails.append({'body': self.nlg.generate_response('req_org_dt_loc', d_act_out['ppl']), 'to': e_act['to']})
+      return self.get_output(d_act_out, emails)
+
+
+    #######################
     d_act_in['nlu'] = self.nlu.get_dialog_act(utterance)
     d_act_out = self.dm.next_act(d_act_in)
     emails = []

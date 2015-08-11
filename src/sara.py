@@ -86,7 +86,11 @@ def random_body():
 
 def sara_debug(string, eobj=None):
     if eobj is not None:
-        logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(sara_get_body(eobj)), string))
+        body = sara_get_body(eobj)
+        if body is not None:
+            logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(body), string))
+        else:
+            logger.debug('[SARA]:: From:%s To:%s Subject:%s ::%s' %(eobj['from'],eobj['to'], eobj['subject'], string))
 
     else:
         logger.debug('[SARA]::%s'%(string))
@@ -133,7 +137,7 @@ def sara_handle():
     sara_debug('Pushed History=%d, Current History=%d'%(data['historyId'], lastHistoryID))
 
 
-    pprint(changes)
+    # pprint(changes)
 
     for history in changes:
         if 'messagesAdded' in history:
@@ -143,6 +147,7 @@ def sara_handle():
                 thread_id = messages['message']['threadId']
                 sara_message_handle(message_id, thread_id)
 
+
     res = dbh.update(
         {'type': 'lastHistoryId'},
         {
@@ -151,8 +156,11 @@ def sara_handle():
         },  upsert = True
         )
 
+    print "------SARA RETURNED-----"
 
 def sara_message_handle(message_id, thread_id):
+
+    sara_debug('[HANDLE]: message_id=%s, thread_id=%s'%(message_id, thread_id))
 
     message = google.GetMessage(gm, 'me', message_id)
     raw_email = base64.urlsafe_b64decode(message['raw'].encode("utf-8"))
@@ -163,17 +171,17 @@ def sara_message_handle(message_id, thread_id):
     to_addrs =  strip_email(eobj['to']) # is a list
 
     sub = eobj['subject']
-    if sub is None:
+    if sub is None or sub == '':
         sara_debug('Subject missing', eobj)
 
-    body = eobj['body']
-    if body is None:
+    if sara_get_body(eobj) is None:
         sara_debug('No body present', eobj)
 
-    cc_addrs = strip_email(eobj['cc'])
-    if cc_addrs is None:
-        sara_debug('No CC', eobj)
+    if eobj['cc'] is None or eobj['cc'] == '':
+        sara_debug('No CC')
         cc_addrs = []
+    else:
+        cc_addrs = strip_email(eobj['cc'])
 
     # all to+cc addresses without sara
     to_plus_cc_addrs = [addr for addr in (to_addrs + cc_addrs) if addr != SARA]
@@ -243,8 +251,21 @@ def sara_message_handle(message_id, thread_id):
         )
 
     # do nothing for loopback messages
-    if from_addr != SARA:
+    if from_addr[0] != SARA:
         receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
+
+# handles the redirection from
+# thanks.html when a new user integrates
+# his/her calendar
+# Pull up the second last message_id and
+# receive(), the last message_id corresponds to
+# sara's bcc
+def sara_handle_new(email_str):
+    record = db.find_one({'bu': email_str})
+    if record is None:
+        sara_debug('Unable to sign up'%(email_str))
+    else:
+        sara_message_handle(record['mlist'][-2], record['thread_id'])
 
 
 def find_last_involvement(to_addrs, thread_id):
@@ -292,10 +313,9 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
         audience = [addr for addr in to_plus_cc_addrs if addr != bu]
         if audience and audience != fulist:
-            adding_others_reply(fulist, current_email)
+            adding_others_reply(fulist, current_email, thread_id)
             to_plus_cc_addrs = fulist
 
-    to_plus_cc_addrs.append(SARA)
     person_list = []
     for item in to_plus_cc_addrs:
 
@@ -338,7 +358,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
             send(to_addrs, body, thread_id)
 
         if output_obj['meeting'] is not None:
-            send_invite(bu, fulist, output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
+            send_invite(SARA_F, list(output_obj['meeting']['to']), output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
 
         sara_debug("Finished receiving...Returning")
         return 'success'
@@ -350,16 +370,17 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
         sara_debug("Failed receiving...Returning")
         return 'Failure'
 
-def adding_others_reply(fulist, last_email):
+def adding_others_reply(fulist, last_email, thread_id):
 
     msg = MIMEText(new_body)
     msg = MIMEText("Adding Others" + "\r\n\r\n> " + sara_quote(last_email))
     msg['cc'] = ( ",".join([SARA_F] + [addr for addr in fulist if addr != last_email['from']]))
     msg['subject'] = last_email['subject']
     msg['from'] = SARA_F
-    msg.add_header({'In-Reply-To': last_email['Message-ID'], 'References': last_email['References'] + ' ' +last_email['Message-ID']})
-    message = {'raw': base64.b64encode(msg.as_string())}
-    result = google.SendMessage(gm, 'me', message)
+    msg.add_header("In-Reply-To", last_email["Message-ID"])
+    msg.add_header("References", last_email['References'] + " " +last_email["Message-ID"])
+    message = {'threadId': thread_id, 'raw': base64.urlsafe_b64encode(msg.as_string())}
+    result = google.SendMessage(gm, 'me', message, thread_id)
     if result is not None:
         return 'success'
 
@@ -372,8 +393,10 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
         msg = MIMEText(new_body + "\r\n\r\n> " + sara_quote(last_email))
 
     msg['to'] = to_addrs
+    if cc_addrs is not None:
+        msg['cc'] = cc_addrs
 
-    msg['cc'] = SARA_F + ("," + cc_addrs if cc_addrs else "")
+    msg['bcc'] = SARA_F
     sara_debug("SARA CCCCCC"+SARA_F + ("," + cc_addrs if cc_addrs else ""))
 
     sub = last_email['subject']
@@ -395,7 +418,7 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
         msg.add_header("References", last_email["Message-ID"])
 
 
-    message = {'threadId': thread_id, 'raw': base64.b64encode(msg.as_string())}
+    message = {'threadId': thread_id, 'raw': base64.urlsafe_b64encode(msg.as_string())}
     result = google.SendMessage(gm, 'me', message, thread_id)
 
     if result is not None:
