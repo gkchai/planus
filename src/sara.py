@@ -260,12 +260,12 @@ def sara_message_handle(message_id, thread_id):
 # Pull up the second last message_id and
 # receive(), the last message_id corresponds to
 # sara's bcc
-def sara_handle_new(email_str):
-    record = db.find_one({'bu': email_str})
+def sara_handle_new(email_str, thread_id):
+    record = db.find_one({'thread_id': thread_id})
     if record is None:
-        sara_debug('Unable to sign up'%(email_str))
+        sara_debug('Unable to sign up %s'%(email_str))
     else:
-        sara_message_handle(record['mlist'][-2], record['thread_id'])
+        sara_message_handle(record['mlist'][-2], thread_id)
 
 
 def find_last_involvement(to_addrs, thread_id):

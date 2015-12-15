@@ -98,8 +98,8 @@ def get_free_slots(addr):
     else:
 
 
-        ddtstart = datetime.datetime.now()
-        ddtend = ddtstart + datetime.timedelta(days = 60)
+        ddtstart = datetime.datetime.now() - datetime.timedelta(hours=24)
+        ddtend = ddtstart + datetime.timedelta(days = 10)
         request_body =  {
                       "timeMin": ddtstart.strftime("%Y-%m-%dT%H:%M:%SZ"),
                       "timeMax": ddtend.strftime("%Y-%m-%dT%H:%M:%SZ"),

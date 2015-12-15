@@ -579,6 +579,39 @@ def GetMimeMessage(service, user_id, msg_id):
     print 'An error occurred: %s' % error
 
 
+def send_invite(service, to_addrs, location, ddtstart, ddtend):
+
+  attendees = []
+  for addr in to_addrs:
+    attendees.append( {'email': addr})
+
+  event = {
+    'summary': 'Meet @ %s'%location,
+    'location': location,
+    'description': 'Meeting',
+    'start': {
+      'dateTime': ddtstart.isoformat('T'),
+      # 'timeZone': 'America/Los_Angeles',
+    },
+    'end': {
+      'dateTime': ddtend.isoformat('T'),
+      # 'timeZone': 'America/Los_Angeles',
+    },
+    # 'recurrence': [
+    #   'RRULE:FREQ=DAILY;COUNT=2'
+    # ],
+    'attendees': attendees,
+    'reminders': {
+      'useDefault': True,
+      # 'overrides': [
+      #   {'method': 'email', 'minutes': 24 * 60},
+      #   {'method': 'popup', 'minutes': 10},
+      # ],
+    },
+  }
+
+  event = service.events().insert(calendarId='primary', body=event, sendNotifications=True).execute()
+  print 'Event created: %s' % (event.get('htmlLink'))
 
 
 def google_hande(lastHistoryID):
