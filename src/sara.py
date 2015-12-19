@@ -1,23 +1,22 @@
-import sendgrid
 import datetime
 import email
 from email_reply_parser import EmailReplyParser
 import os
 import sys
 import random
-from planus.src.cal import *
-from planus.src.ds import ds
-from planus.src import google
 import re
 import base64
-sys.path.append(os.path.abspath('/var/www/autos'))
-from flask import request
 from email.mime.text import MIMEText
 from pprint import pprint
 
+# local code
+from planus.src.cal import *
+from planus.src.ds import ds
+from planus.src import google
+from planus.util import mail
+from planus.util.mail import address_dict, SARA, SARA_F
 
-SARA = 'sara@autoscientist.com'
-SARA_F = 'Sara <sara@autoscientist.com>'
+
 LOG_DIR = '/var/www/autos/planus/log/'
 
 import logging
@@ -35,15 +34,11 @@ logger.setLevel(logging.DEBUG)
 # add the handlers to the logger
 # logger.addHandler(handler)
 
-address_dict = {SARA: ['Sara', SARA_F]}
 
 from pymongo import MongoClient
 client = MongoClient() # get a client
 db = client.sara.handles # get the database, like a table in sql
-dbh = client.sara.historyid
-sg = sendgrid.SendGridClient('as89281446', 'krishnagitaG0')
 gm = google.create_gmail_client()
-
 
 
 def record_exists(thread_id, message_id=None):
@@ -52,136 +47,45 @@ def record_exists(thread_id, message_id=None):
     else:
         return (db.find_one({'thread_id':thread_id}) is not None)
 
-def sara_get_body(msg):
-    # sara_debug(msg.as_string())
-    maintype = msg.get_content_maintype()
-    # if maintype == 'multipart':
-    if msg.is_multipart():
-        for part in msg.get_payload():
-            if part.get_content_maintype() == 'text':
-                return part.get_payload()
-    # elif maintype == 'text':
-    else:
-        return msg.get_payload()
-    # else:
-    #     sara_debug('EMAIL TYPE NOT SUPPORTED YET')
-    #     return 'Sorry, Email type not supported. Content type =' + msg.get_content_maintype()
 
-def sara_quote(msg):
-
-    body = sara_get_body(msg)
-    seq = [line for line in body.splitlines(True)]
-    quoted_body = '> '.join(seq)
-    date_tuple = email.utils.parsedate_tz(msg['Date'])
-    if date_tuple:
-        local_date = datetime.datetime.fromtimestamp(email.utils.mktime_tz(date_tuple))
-        time_body = local_date.strftime("On %a, %b %-d, %Y at %-H:%M %p,")
-        time_body = time_body + " %s wrote:"%msg['From']
-        return time_body + "\r\n\r\n> " + quoted_body
-    else:
-        return quoted_body
-
-def random_body():
-    return "Hi! This is Sara. Let's schedule a meeting at %d %s. \n Regards,\n Sara"%(random.randint(1,10), random.choice(['AM', 'PM']))
 
 def sara_debug(string, eobj=None):
     if eobj is not None:
-        body = sara_get_body(eobj)
+        body = mail.get_body(eobj)
         if body is not None:
             logger.debug('[SARA]:: From:%s To:%s Subject:%s Body:%s::%s' %(eobj['from'],eobj['to'], eobj['subject'], EmailReplyParser.parse_reply(body), string))
         else:
             logger.debug('[SARA]:: From:%s To:%s Subject:%s ::%s' %(eobj['from'],eobj['to'], eobj['subject'], string))
-
     else:
         logger.debug('[SARA]::%s'%(string))
 
-def sara_sanity(cc, sub):
-    # sanity check to exclude type of communications we
-    # dont want i.e., indirect mail, incorrect addr, Fwd's etc.
-    if (cc is None) or (cc != SARA):
-        sara_debug('[sanity]: CC field %s not correct'%cc)
-        return "Fail"
-    if len(sub) >= 4:
-        if (sub.lower())[:4] == 'fwd:':
-            sara_debug('[sanity]: Received a forwarding mail')
-            return "Fail"
-    return "Pass"
-
-
-def strip_email(string):
-
-    raw = []
-    for item in string.split(','):
-        m = re.search("[\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}", string.lower())
-        each = m.group(0)
-        address_dict[each] = [string[0:m.start()-2], item]
-        raw.append(each)
-    return raw
 
 
 
-def sara_handle():
-    # pass the message handle to sara and take
-    # appropriate action: if message_id doesn't
-    # exist in database then create a new thread
 
-    record = dbh.find_one({'type': 'lastHistoryId'})
-    if record is None:
-        lastHistoryID = 2506
-    else:
-        lastHistoryID = record['historyId']
-
-    changes = google.ListHistory(gm, 'me', lastHistoryID)
-
-    data = json.loads(base64.urlsafe_b64decode(request.json['message']['data'].encode("utf-8")))
-    sara_debug('Pushed History=%d, Current History=%d'%(data['historyId'], lastHistoryID))
-
-
-    # pprint(changes)
-
-    for history in changes:
-        if 'messagesAdded' in history:
-            for messages in history['messagesAdded']:
-
-                message_id = messages['message']['id']
-                thread_id = messages['message']['threadId']
-                sara_message_handle(message_id, thread_id)
-
-
-    res = dbh.update(
-        {'type': 'lastHistoryId'},
-        {
-            'type': 'lastHistoryId',
-            'historyId': data['historyId'],
-        },  upsert = True
-        )
-
-    print "------SARA RETURNED-----"
-
-def sara_message_handle(message_id, thread_id):
+def sara_handle(message_id, thread_id):
 
     sara_debug('[HANDLE]: message_id=%s, thread_id=%s'%(message_id, thread_id))
-
     message = google.GetMessage(gm, 'me', message_id)
     raw_email = base64.urlsafe_b64decode(message['raw'].encode("utf-8"))
     eobj = email.message_from_string(raw_email)
 
     header = eobj['headers']
-    from_addr = strip_email(eobj['from']) # is a list
-    to_addrs =  strip_email(eobj['to']) # is a list
+    from_addr = mail.strip(eobj['from']) # is a list
+    to_addrs =  mail.strip(eobj['to']) # is a list
 
     sub = eobj['subject']
     if sub is None or sub == '':
         sara_debug('Subject missing', eobj)
 
-    if sara_get_body(eobj) is None:
+    if mail.get_body(eobj) is None:
         sara_debug('No body present', eobj)
 
     if eobj['cc'] is None or eobj['cc'] == '':
         sara_debug('No CC')
         cc_addrs = []
     else:
-        cc_addrs = strip_email(eobj['cc'])
+        cc_addrs = mail.strip(eobj['cc'])
 
     # all to+cc addresses without sara
     to_plus_cc_addrs = [addr for addr in (to_addrs + cc_addrs) if addr != SARA]
@@ -216,6 +120,7 @@ def sara_message_handle(message_id, thread_id):
             prev_mlist.append(message_id)
         else:
             sara_debug('Existing message', eobj)
+            # return
 
         fulist = record['fu']
         bu = record['bu']
@@ -225,8 +130,6 @@ def sara_message_handle(message_id, thread_id):
 
     else:
         sara_debug('New thread/message', eobj)
-        # if sara_sanity(cc, sub) == 'Fail':
-        #    return "Do Nothing"
 
         # who ever first sent a mail including Sara is the Busy person
         bu = from_addr[0]
@@ -253,19 +156,9 @@ def sara_message_handle(message_id, thread_id):
     # do nothing for loopback messages
     if from_addr[0] != SARA:
         receive(from_addr[0], to_plus_cc_addrs, eobj, thread_id, fulist, bu)
-
-# handles the redirection from
-# thanks.html when a new user integrates
-# his/her calendar
-# Pull up the second last message_id and
-# receive(), the last message_id corresponds to
-# sara's bcc
-def sara_handle_new(email_str, thread_id):
-    record = db.find_one({'thread_id': thread_id})
-    if record is None:
-        sara_debug('Unable to sign up %s'%(email_str))
     else:
-        sara_message_handle(record['mlist'][-2], thread_id)
+        sara_debug('BCC message', eobj)
+
 
 
 def find_last_involvement(to_addrs, thread_id):
@@ -273,7 +166,6 @@ def find_last_involvement(to_addrs, thread_id):
     elist = record['elist']
 
     # sara_debug(elist[0])
-
     for item in reversed(elist):
         em = email.message_from_string(item)
         all_addrs = (em['To'].split(',')) +  [em['From']] + (em['CC'].split(',') if em['CC'] else [])
@@ -305,50 +197,50 @@ def send(to_addrs, body, thread_id):
 
 def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
-    # the following is simply to fix the state among all free users. If a new
-    # free guy is added by the busy guy, please take the most recent state
-    # among the free guys and add him to that. <-- this adding a free guy in the
-    # middle has not been included in the below snippet within the if statement
-    if from_addr in fulist:
-
-        audience = [addr for addr in to_plus_cc_addrs if addr != bu]
-        if audience and audience != fulist:
-            adding_others_reply(fulist, current_email, thread_id)
-            to_plus_cc_addrs = fulist
-
-    person_list = []
-    for item in to_plus_cc_addrs:
-
-        person_list.append({
-                'email': item,
-                'first_name': address_dict[item][0]
-                }
-            )
-
-    from_entry = {
-                    'email': from_addr,
-                    'first_name': address_dict[from_addr][0]
-                }
-
-    input_obj = {
-    'email': {
-            'from': from_entry,
-            'to': person_list,
-            'body': EmailReplyParser.parse_reply(sara_get_body(current_email)),
-          },
-
-    'availability': {
-                  'dt': get_free_slots(bu), # list of tuples of dt objects
-                  'loc': "Starbucks",
-                }
-            }
-
-    pprint(input_obj)
-    dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
-
-
     try:
+        # the following is simply to fix the state among all free users. If a new
+        # free guy is added by the busy guy, please take the most recent state
+        # among the free guys and add him to that. <-- this adding a free guy in the
+        # middle has not been included in the below snippet within the if statement
+        if from_addr in fulist:
+
+            audience = [addr for addr in to_plus_cc_addrs if addr != bu]
+            if audience and audience != fulist:
+                adding_others_reply(fulist, current_email, thread_id)
+                to_plus_cc_addrs = fulist
+
+        person_list = []
+        for item in to_plus_cc_addrs:
+
+            person_list.append({
+                    'email': item,
+                    'first_name': address_dict[item][0]
+                    }
+                )
+
+        from_entry = {
+                        'email': from_addr,
+                        'first_name': address_dict[from_addr][0]
+                    }
+
+        input_obj = {
+        'email': {
+                'from': from_entry,
+                'to': person_list,
+                'body': EmailReplyParser.parse_reply(mail.get_body(current_email)),
+              },
+
+        'availability': {
+                      'dt': get_free_slots(bu), # list of tuples of dt objects
+                      'loc': "Starbucks",
+                    }
+                }
+
+        sara_debug('INPUTTT'+input_obj.__str__())
+        dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
+
         output_obj = dsobj.take_turn(input_obj)
+        sara_debug('OUTPUTTT '+output_obj.__str__())
 
         for each_email in output_obj['emails']:
             to_addrs = list(each_email['to'])
@@ -373,7 +265,7 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 def adding_others_reply(fulist, last_email, thread_id):
 
     msg = MIMEText(new_body)
-    msg = MIMEText("Adding Others" + "\r\n\r\n> " + sara_quote(last_email))
+    msg = MIMEText("Adding Others" + "\r\n\r\n> " + mail.quote(last_email))
     msg['cc'] = ( ",".join([SARA_F] + [addr for addr in fulist if addr != last_email['from']]))
     msg['subject'] = last_email['subject']
     msg['from'] = SARA_F
@@ -390,7 +282,7 @@ def reply(to_addrs, cc_addrs, new_body, last_email, delete, thread_id):
     if delete:
         msg = MIMEText(new_body)
     else:
-        msg = MIMEText(new_body + "\r\n\r\n> " + sara_quote(last_email))
+        msg = MIMEText(new_body + "\r\n\r\n> " + mail.quote(last_email))
 
     msg['to'] = to_addrs
     if cc_addrs is not None:

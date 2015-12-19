@@ -11,6 +11,7 @@ from authomatic import Authomatic
 from authomatic.providers import oauth2
 import random, string
 import pdb
+from pytz import timezone
 CRLF = "\r\n"
 
 login = "sara@autoscientist.com"
@@ -18,9 +19,9 @@ password = "autoscientist"
 
 def send_invite(from_addr, to_addrs, location, ddtstart, ddtend):
 
-    dtstamp = datetime.datetime.now().strftime("%Y%m%dT%H%M%SZ")
-    dtstart = ddtstart.strftime("%Y%m%dT%H%M%SZ")
-    dtend = ddtend.strftime("%Y%m%dT%H%M%SZ")
+    dtstamp = datetime.datetime.now().strftime("%Y%m%dT%H%M%S%z")
+    dtstart = ddtstart.strftime("%Y%m%dT%H%M%S%z")
+    dtend = ddtend.strftime("%Y%m%dT%H%M%S%z")
     organizer = "ORGANIZER;CN=Sara:mailto:sara@autoscientist.com"
     # organizer = "ORGANIZER;CN=Krishna:mailto:gkciitd@gmail.com"
 
@@ -33,14 +34,18 @@ def send_invite(from_addr, to_addrs, location, ddtstart, ddtend):
     ical+="METHOD:REQUEST"+CRLF+"BEGIN:VEVENT"+CRLF+"DTSTART:"+dtstart+CRLF+"DTEND:"+dtend+CRLF+"DTSTAMP:"+dtstamp+CRLF+organizer+CRLF
     ical+= "UID:FIXMEUID"+dtstamp+CRLF
     ical+= attendee+"CREATED:"+dtstamp+CRLF+description+"LAST-MODIFIED:"+dtstamp+CRLF+"LOCATION:"+CRLF+"SEQUENCE:0"+CRLF+"STATUS:CONFIRMED"+CRLF
-    ical+= "SUMMARY:Meeting@"+location+CRLF+"TRANSP:OPAQUE"+CRLF+"END:VEVENT"+CRLF+"END:VCALENDAR"+CRLF
+    ical+= "SUMMARY:Meeting"+CRLF+"TRANSP:OPAQUE"+CRLF+"END:VEVENT"+CRLF+"END:VCALENDAR"+CRLF
 
-    eml_body = "Body of this calendar invite should be visible!"
-    eml_body_bin = "This is the email body in binary - two steps"
+    # eml_body = "Body of this calendar invite should be visible!"
+    # eml_body_bin = "This is the email body in binary - two steps"
+
+    eml_body = ""
+    eml_body_bin = ""
+
     msg = MIMEMultipart('mixed')
     msg['Reply-To']=from_addr
     msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = "Meeting @ %s"%location
+    msg['Subject'] = "Meeting"
     msg['From'] = from_addr
     msg['To'] = ",".join(to_addrs)
 
@@ -100,9 +105,12 @@ def get_free_slots(addr):
 
         ddtstart = datetime.datetime.now() - datetime.timedelta(hours=24)
         ddtend = ddtstart + datetime.timedelta(days = 10)
+        ddtstart = ddtstart.replace(tzinfo=timezone('EST'))
+        ddtend = ddtend.replace(tzinfo=timezone('EST'))
+
         request_body =  {
-                      "timeMin": ddtstart.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                      "timeMax": ddtend.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                      "timeMin": ddtstart.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                      "timeMax": ddtend.strftime("%Y-%m-%dT%H:%M:%S%z"),
                       "items": [
                         {
                           "id": addr
@@ -137,6 +145,11 @@ def get_free_slots(addr):
             for item in json.loads(resp.content)['calendars'][addr]['busy']:
                 bts = datetime.datetime.strptime(item['start'], "%Y-%m-%dT%H:%M:%SZ")
                 bte = datetime.datetime.strptime(item['end'], "%Y-%m-%dT%H:%M:%SZ")
+
+                # convert them to timezone specific
+                bts = bts.replace(tzinfo=timezone('EST'))
+                bte = bte.replace(tzinfo=timezone('EST'))
+
 
                 fs_en.append(bts - datetime.timedelta(milliseconds=0))
                 fs_st.append(bte + datetime.timedelta(milliseconds=0))

@@ -264,8 +264,8 @@ def main():
     # ]
 
     seq = [
-            (B, [F1], S, 'Compose', 'Lets schedule a meeting at 8 PM at my conference room.'),
-            ([F1], S,  None, 'Reply-To', 'Wed 12 Aug 08:00PM works for me'),
+            (B, [F1], S, 'Compose', 'Lets meet tomorrow 8 PM in McDonalds.'),
+            ([F1], S,  None, 'Reply-To', '19 Dec 08:00PM works for me'),
     ]
 
     test_parse_run(seq, test_id)

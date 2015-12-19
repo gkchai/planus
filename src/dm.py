@@ -226,20 +226,30 @@ class dm(object):
           'val': proposals,
         }
 
-    # handle location
+
     if len(self.st.loc)>=1:
         sumst['loc'] = {
           'status': 'finish',
           'val': self.st.loc[0]['val'],
         }
     else:
-      if self.st.asked['loc'] is False:
-        sumst['loc'] = {
-          'status': 'req_org',
-        }
-      else:
-        sumst['loc'] = {
-          'status': 'waiting',
-        }
+    # handle location
+    # always assume location is available for now
+    # TODO: Fixit
+
+      sumst['loc'] = {
+        'status': 'finish',
+        'val': 'Location'
+      }
+
+
+      # if self.st.asked['loc'] is False:
+      #   sumst['loc'] = {
+      #     'status': 'req_org',
+      #   }
+      # else:
+      #   sumst['loc'] = {
+      #     'status': 'waiting',
+      #   }
 
     return sumst

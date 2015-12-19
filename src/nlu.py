@@ -1,4 +1,6 @@
 import requests, pdb, urllib2
+import json
+
 # Natural Language Understanding unit
 class nlu(object):
 
@@ -10,4 +12,8 @@ class nlu(object):
     url = 'https://api.wit.ai/message?q='+urllib2.quote(utterance)
     response = requests.get(url, headers=self.headers)
     d_act = response.json()
+
+    from planus.src.sara import *
+    sara_debug(json.dumps(d_act))
+
     return d_act

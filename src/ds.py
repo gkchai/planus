@@ -22,11 +22,7 @@ class ds(object):
     if input_obj['availability']['dt'] is None:
 
       output = {
-            'meeting': {
-                          'dt': (None, None), # if everything is set, and meeting is ready to be added to calendar otherwise, None
-                          'loc': '', # if everything is set, location to add to google calendar
-                          'to': set(), # set of email ids
-                        },
+            'meeting': None,
             'emails': [
                           {
                             'to': set([input_obj['email']['from']['email']]), # set of email ids to cc during sending this email,

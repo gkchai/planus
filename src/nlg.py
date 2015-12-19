@@ -9,7 +9,7 @@ class nlg(object):
       'confirm': 'Could you confirm if you can make %s?',
       'reqalts': '',
       'finish': 'Thank you for helping me schedule your meeting. You will shortly receive a calendar invite for the meeting set up on %s at %s.',
-      'req_org_loc': 'Thank you for helping me schedule your meeting. While I work with others, if you could you update me on the meeting location, that would be great.',
+      'req_org_loc': 'Thank you for helping me schedule your meeting. While I work with others, if you could update me on the meeting location, that would be great.',
       'req_org_dt': ('Unfortunately, I was unable to find a slot in your calendar. Could you tell me a set of date and times that are convenient for you?'
                      '\n\nIf you have not done so already, you can integrate your calendar at https://autoscientist.com/login/google/ with us so I can automatically schedule your meetings.'
                     ),
