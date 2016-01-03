@@ -12,6 +12,7 @@ from pprint import pprint
 # local code
 from planus.src.cal import *
 from planus.src.ds import ds
+from planus.src.gds import gds
 from planus.src import google
 from planus.util import mail
 from planus.util.mail import address_dict, SARA, SARA_F
@@ -232,25 +233,29 @@ def receive(from_addr, to_plus_cc_addrs, current_email, thread_id, fulist, bu):
 
         'availability': {
                       'dt': get_free_slots(bu), # list of tuples of dt objects
-                      'loc': "Starbucks",
+                      'loc': 'Location',
                     }
                 }
 
         sara_debug('INPUTTT'+input_obj.__str__())
-        dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
+        # dsobj = ds(thread_id) # if tid is None ds will pass a brand new object
+        dsobj = gds(thread_id)
+
 
         output_obj = dsobj.take_turn(input_obj)
         sara_debug('OUTPUTTT '+output_obj.__str__())
 
-        for each_email in output_obj['emails']:
-            to_addrs = list(each_email['to'])
-            sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
-            to_addrs = [address_dict[item][1] for item in to_addrs]
-            body = each_email['body']
-            send(to_addrs, body, thread_id)
+        if output_obj is not None:
 
-        if output_obj['meeting'] is not None:
-            send_invite(SARA_F, list(output_obj['meeting']['to']), output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
+            for each_email in output_obj['emails']:
+                to_addrs = list(each_email['to'])
+                sara_debug("INPUTTTTTTTT"+','.join(to_addrs))
+                to_addrs = [address_dict[item][1] for item in to_addrs]
+                body = each_email['body']
+                send(to_addrs, body, thread_id)
+
+            if output_obj['meeting'] is not None:
+                send_invite(SARA_F, list(output_obj['meeting']['to']), output_obj['meeting']['loc'], output_obj['meeting']['dt']['start'], output_obj['meeting']['dt']['end'])
 
         sara_debug("Finished receiving...Returning")
         return 'success'

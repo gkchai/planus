@@ -16,10 +16,15 @@ def strip(string):
 
     raw = []
     for item in string.split(','):
-        m = re.search("[\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}", string.lower())
-        each = m.group(0)
-        address_dict[each] = [string[0:m.start()-2], item]
-        raw.append(each)
+        if not '<' in item:
+            each = item
+            address_dict[each] = [None, item]
+            raw.append(each)
+        else:
+            m = re.search("[\w\-\.]+@[\w\-][\w\-\.]+[a-zA-Z]{1,4}", item.lower())
+            each = m.group(0)
+            address_dict[each] = [item[0:m.start()-2], item]
+            raw.append(each)
     return raw
 
 

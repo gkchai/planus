@@ -231,6 +231,8 @@ def test_check_mail(self_addr, to_addr, mailfolder, test_id):
       print (msg['To'] == to_addr)
 
       srch = re.search("\[TestID: %s\]"%test_id, msg['Subject'])
+      if msg['CC'] is None:
+        msg['CC'] = ''
 
       if srch and (strip_email(to_addr[0]) in ((msg['To'] + msg['CC']))):
         M.close()
@@ -265,7 +267,7 @@ def main():
 
     seq = [
             (B, [F1], S, 'Compose', 'Lets meet tomorrow 8 PM in McDonalds.'),
-            ([F1], S,  None, 'Reply-To', '19 Dec 08:00PM works for me'),
+            ([F1], S,  None, 'Reply-To', 'Yes, 03 Jan 08:00PM works for me'),
     ]
 
     test_parse_run(seq, test_id)
